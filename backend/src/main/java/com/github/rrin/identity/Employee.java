@@ -1,4 +1,4 @@
-package com.github.rrin.entity.identity;
+package com.github.rrin.identity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

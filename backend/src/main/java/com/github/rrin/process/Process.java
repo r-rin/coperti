@@ -1,6 +1,6 @@
-package com.github.rrin.entity.process;
+package com.github.rrin.process;
 
-import com.github.rrin.entity.item.Item;
+import com.github.rrin.item.Item;
 import jakarta.persistence.*;
 import lombok.*;
 

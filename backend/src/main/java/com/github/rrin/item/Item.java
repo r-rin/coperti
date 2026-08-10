@@ -1,4 +1,4 @@
-package com.github.rrin.entity.item;
+package com.github.rrin.item;
 
 import jakarta.persistence.*;
 import lombok.*;

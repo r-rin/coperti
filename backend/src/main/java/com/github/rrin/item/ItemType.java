@@ -1,4 +1,4 @@
-package com.github.rrin.entity.item;
+package com.github.rrin.item;
 
 public enum ItemType {
     PART,

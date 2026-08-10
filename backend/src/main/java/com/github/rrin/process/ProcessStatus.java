@@ -1,4 +1,4 @@
-package com.github.rrin.entity.process;
+package com.github.rrin.process;
 
 public enum ProcessStatus {
     DRAFT,
