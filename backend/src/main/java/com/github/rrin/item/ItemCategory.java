@@ -3,6 +3,7 @@ package com.github.rrin.item;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,7 +26,8 @@ public class ItemCategory {
     private ItemCategory parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
-    private List<ItemCategory> children;
+    @Builder.Default
+    private List<ItemCategory> children = new ArrayList<>();
 
     public void addChild(ItemCategory child) {
         children.add(child);
