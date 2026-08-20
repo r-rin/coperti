@@ -1,11 +1,15 @@
 package com.github.rrin.item.service.implementation;
 
+import com.github.rrin.exception.ValidationCheck;
 import com.github.rrin.exception.types.EntityNotFoundException;
+import com.github.rrin.exception.types.InvalidQuery;
 import com.github.rrin.item.ItemCategory;
 import com.github.rrin.item.dto.ItemCategoryRequest;
 import com.github.rrin.item.repository.ItemCategoryRepository;
 import com.github.rrin.item.service.ItemCategoryService;
+import com.github.rrin.utils.PaginatedResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -54,18 +58,47 @@ public class ItemCategoryServiceImpl implements ItemCategoryService {
 
     @Override
     public ItemCategory addChild(UUID id, UUID childId) {
-        ItemCategory parent = checkIfCategoryExists(id);
-        ItemCategory child = checkIfCategoryExists(childId);
+        Optional<ItemCategory> parentOptional = categoryRepository.findById(id);
+        Optional<ItemCategory> childOptional = categoryRepository.findById(childId);
+
+        new ValidationCheck()
+                .check(parentOptional.isPresent(), "Parent category not found")
+                .check(childOptional.isPresent(), "Child category not found")
+                .throwIfAny(EntityNotFoundException::new);
+
+        ItemCategory parent = parentOptional.orElseThrow(EntityNotFoundException::new);
+        ItemCategory child = childOptional.orElseThrow(EntityNotFoundException::new);
         parent.addChild(child);
         return categoryRepository.save(parent);
     }
 
     @Override
     public ItemCategory removeChild(UUID id, UUID childId) {
-        ItemCategory parent = checkIfCategoryExists(id);
-        ItemCategory child = checkIfCategoryExists(childId);
+        Optional<ItemCategory> parentOptional = categoryRepository.findById(id);
+        Optional<ItemCategory> childOptional = categoryRepository.findById(childId);
+
+        new ValidationCheck()
+                .check(parentOptional.isPresent(), "Parent category not found")
+                .check(childOptional.isPresent(), "Child category not found")
+                .throwIfAny(EntityNotFoundException::new);
+
+        ItemCategory parent = parentOptional.orElseThrow(EntityNotFoundException::new);
+        ItemCategory child = childOptional.orElseThrow(EntityNotFoundException::new);
         parent.removeChild(child);
         return categoryRepository.save(parent);
+    }
+
+    @Override
+    public PaginatedResponse<ItemCategory> findByName(String name, int page, int size) {
+        new ValidationCheck()
+                .check(page >= 0, "Page number must be greater than or equal to 0")
+                .check(size > 0, "Page size must be greater than 0")
+                .throwIfAny(InvalidQuery::new);
+
+
+        return PaginatedResponse.of(
+                categoryRepository.findAllByNameContainingIgnoreCase(name, PageRequest.of(page, size))
+        );
     }
 
     private ItemCategory checkIfCategoryExists(UUID id) {
