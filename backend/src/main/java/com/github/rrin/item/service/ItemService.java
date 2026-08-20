@@ -5,7 +5,6 @@ import com.github.rrin.item.ItemType;
 import com.github.rrin.item.dto.ItemRequest;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface ItemService {
