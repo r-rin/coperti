@@ -1,6 +1,6 @@
 package com.github.rrin;
 
-adimport com.github.rrin.exception.types.EntityNotFoundException;
+import com.github.rrin.exception.types.EntityNotFoundException;
 import com.github.rrin.exception.types.InvalidQuery;
 import com.github.rrin.item.ItemCategory;
 import com.github.rrin.item.dto.ItemCategoryRequest;
