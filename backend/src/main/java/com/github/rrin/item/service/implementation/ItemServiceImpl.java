@@ -30,7 +30,7 @@ public class ItemServiceImpl implements ItemService {
     public Item create(ItemRequest itemRequest) {
         Item item = new Item();
         item.setName(itemRequest.getName());
-        item.setType(itemRequest.getType());
+        item.setType(itemRequest.getType() == null ? ItemType.PART : itemRequest.getType());
 
         if (itemRequest.getCategoryId() == null) {
             return itemRepository.save(item);
