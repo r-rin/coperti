@@ -1,20 +1,35 @@
+import com.github.gradle.node.npm.task.NpmTask
+
 plugins {
-    id("java")
+    base
+    id("com.github.node-gradle.node") version "7.1.0"
 }
 
-group = "com.github.rrin"
-version = "1.0-SNAPSHOT"
-
-repositories {
-    mavenCentral()
+node {
+    version.set("24.19.0")
+    download.set(true)
 }
 
-dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+val npmBuild = tasks.register<NpmTask>("npmBuild") {
+    description = "Builds the frontend"
+    group = "application"
+    dependsOn(tasks.npmInstall)
+    npmCommand.set(listOf("run", "build"))
+    inputs.files(fileTree(projectDir) {
+        exclude("node_modules", ".next", ".gradle", "build")
+    })
+    outputs.dir(layout.projectDirectory.dir(".next/standalone"))
 }
 
-tasks.test {
-    useJUnitPlatform()
+tasks.assemble { dependsOn(npmBuild) }
+
+tasks.clean {
+    delete(".next")
+}
+
+tasks.register<NpmTask>("runDev") {
+    description = "Runs the frontend in development mode"
+    group = "application"
+    dependsOn(tasks.npmInstall)
+    npmCommand.set(listOf("run", "dev"))
 }
