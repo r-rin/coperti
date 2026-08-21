@@ -15,7 +15,7 @@ import java.util.UUID;
 @Table(uniqueConstraints = {
         @UniqueConstraint(columnNames = {
                 "process_id",
-                "sequence"
+                "seq"
         })
 })
 public class ProcessStep {
