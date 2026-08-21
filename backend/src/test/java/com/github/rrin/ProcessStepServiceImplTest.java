@@ -6,6 +6,7 @@ import com.github.rrin.item.Item;
 import com.github.rrin.item.repository.ItemRepository;
 import com.github.rrin.process.Operation;
 import com.github.rrin.process.Process;
+import com.github.rrin.process.ProcessStatus;
 import com.github.rrin.process.ProcessStep;
 import com.github.rrin.process.dto.ProcessComponentRequest;
 import com.github.rrin.process.dto.ProcessStepRequest;
@@ -55,7 +56,7 @@ class ProcessStepServiceImplTest {
     private ProcessStepServiceImpl service;
 
     private Process emptyProcess(UUID processId) {
-        return Process.builder().id(processId).steps(new ArrayList<>()).build();
+        return Process.builder().id(processId).status(ProcessStatus.DRAFT).steps(new ArrayList<>()).build();
     }
 
     @Test
@@ -289,7 +290,10 @@ class ProcessStepServiceImplTest {
         UUID stepId = UUID.randomUUID();
         UUID operationId = UUID.randomUUID();
         when(stepRepository.findById(stepId))
-                .thenReturn(Optional.of(ProcessStep.builder().id(stepId).build()));
+                .thenReturn(Optional.of(ProcessStep.builder()
+                        .id(stepId)
+                        .process(emptyProcess(UUID.randomUUID()))
+                        .build()));
         when(operationRepository.findById(operationId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> service.update(ProcessStepRequest.builder()
@@ -316,7 +320,7 @@ class ProcessStepServiceImplTest {
     @Test
     void deleteStep() {
         UUID stepId = UUID.randomUUID();
-        ProcessStep step = ProcessStep.builder().id(stepId).build();
+        ProcessStep step = ProcessStep.builder().id(stepId).process(emptyProcess(UUID.randomUUID())).build();
         when(stepRepository.findById(stepId)).thenReturn(Optional.of(step));
 
         ProcessStep deleted = service.delete(stepId);
@@ -332,5 +336,49 @@ class ProcessStepServiceImplTest {
         UUID stepId = UUID.randomUUID();
         when(stepRepository.findById(stepId)).thenReturn(Optional.empty());
         assertThrows(EntityNotFoundException.class, () -> service.delete(stepId));
+    }
+
+    @Test
+    void createThrowsWhenProcessNotDraft() {
+        UUID processId = UUID.randomUUID();
+        Process process = emptyProcess(processId);
+        process.setStatus(ProcessStatus.ACTIVE);
+        when(processRepository.findById(processId)).thenReturn(Optional.of(process));
+
+        assertThrows(InvalidQuery.class, () -> service.create(processId, ProcessStepRequest.builder()
+                .seq(1)
+                .operationId(UUID.randomUUID())
+                .outputQuantity(1)
+                .build()));
+        verify(stepRepository, never()).save(any());
+    }
+
+    @Test
+    void updateThrowsWhenProcessNotDraft() {
+        UUID stepId = UUID.randomUUID();
+        Process process = emptyProcess(UUID.randomUUID());
+        process.setStatus(ProcessStatus.ARCHIVED);
+        ProcessStep step = ProcessStep.builder().id(stepId).seq(1).process(process).build();
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(step));
+
+        assertThrows(InvalidQuery.class, () -> service.update(ProcessStepRequest.builder()
+                .id(stepId)
+                .seq(1)
+                .operationId(UUID.randomUUID())
+                .outputQuantity(1)
+                .build()));
+        verify(stepRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteThrowsWhenProcessNotDraft() {
+        UUID stepId = UUID.randomUUID();
+        Process process = emptyProcess(UUID.randomUUID());
+        process.setStatus(ProcessStatus.ACTIVE);
+        ProcessStep step = ProcessStep.builder().id(stepId).process(process).build();
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(step));
+
+        assertThrows(InvalidQuery.class, () -> service.delete(stepId));
+        verify(stepRepository, never()).delete(any());
     }
 }

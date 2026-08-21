@@ -44,11 +44,13 @@ public class ProcessServiceImpl implements ProcessService {
     public Process create(ProcessRequest request) {
         Item producedItem = resolveProducedItem(request.getProducedItemId());
         validateVersion(request.getVersion());
+        validateVersionIsFree(producedItem.getId(), request.getVersion(), null);
 
         Process process = new Process();
         process.setProduces(producedItem);
         process.setVersion(request.getVersion());
-        process.setStatus(request.getStatus() == null ? ProcessStatus.DRAFT : request.getStatus());
+        // a process always starts as a draft; it only becomes ACTIVE through setActive
+        process.setStatus(ProcessStatus.DRAFT);
         process.setSteps(Collections.emptyList());
         Process saved = processRepository.save(process);
 
@@ -63,8 +65,10 @@ public class ProcessServiceImpl implements ProcessService {
     @Override
     public Process update(ProcessRequest request) {
         Process process = checkIfProcessExists(request.getId());
+        ProcessGuard.requireDraft(process, "update process");
         Item producedItem = resolveProducedItem(request.getProducedItemId());
         validateVersion(request.getVersion());
+        validateVersionIsFree(producedItem.getId(), request.getVersion(), process.getId());
 
         // status has dedicated setters; steps are managed via ProcessStepService
         process.setProduces(producedItem);
@@ -75,6 +79,7 @@ public class ProcessServiceImpl implements ProcessService {
     @Override
     public Process delete(UUID id) {
         Process process = checkIfProcessExists(id);
+        ProcessGuard.requireDraft(process, "delete process");
         for (ProcessStep step : process.getSteps()) {
             processStepService.delete(step.getId());
         }
@@ -84,23 +89,46 @@ public class ProcessServiceImpl implements ProcessService {
 
     @Override
     public Process setDrafted(UUID id) {
-        return setStatus(id, ProcessStatus.DRAFT);
+        Process process = checkIfProcessExists(id);
+        new ValidationCheck()
+                .check(process.getStatus() != ProcessStatus.ACTIVE,
+                        "Active process cannot be moved back to draft, archive it first")
+                .throwIfAny(InvalidQuery::new);
+        return setStatus(process, ProcessStatus.DRAFT);
     }
 
     @Override
     public Process setActive(UUID id) {
-        return setStatus(id, ProcessStatus.ACTIVE);
+        Process process = checkIfProcessExists(id);
+        if (process.getStatus() == ProcessStatus.ACTIVE) {
+            return process;
+        }
+        new ValidationCheck()
+                .check(process.getSteps() != null && !process.getSteps().isEmpty(),
+                        "Process must have at least one step to be activated")
+                .throwIfAny(InvalidQuery::new);
+        // at most one active process per produced item: archive the current one
+        processRepository.findFirstByProduces_IdAndStatus(process.getProduces().getId(), ProcessStatus.ACTIVE)
+                .ifPresent(current -> setStatus(current, ProcessStatus.ARCHIVED));
+        return setStatus(process, ProcessStatus.ACTIVE);
     }
 
     @Override
     public Process setArchived(UUID id) {
-        return setStatus(id, ProcessStatus.ARCHIVED);
+        return setStatus(checkIfProcessExists(id), ProcessStatus.ARCHIVED);
     }
 
-    private Process setStatus(UUID id, ProcessStatus status) {
-        Process process = checkIfProcessExists(id);
+    private Process setStatus(Process process, ProcessStatus status) {
         process.setStatus(status);
         return processRepository.save(process);
+    }
+
+    private void validateVersionIsFree(UUID producedItemId, int version, UUID selfId) {
+        processRepository.findByProduces_IdAndVersion(producedItemId, version)
+                .filter(existing -> !existing.getId().equals(selfId))
+                .ifPresent(existing -> {
+                    throw new InvalidQuery("Version " + version + " already exists for produced item: " + producedItemId);
+                });
     }
 
     private Item resolveProducedItem(UUID producedItemId) {

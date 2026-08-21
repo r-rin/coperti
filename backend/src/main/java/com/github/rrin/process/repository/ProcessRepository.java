@@ -9,4 +9,6 @@ import java.util.UUID;
 
 public interface ProcessRepository extends JpaRepository<Process, UUID> {
     Optional<Process> findProcessByStatus(ProcessStatus status);
+    Optional<Process> findFirstByProduces_IdAndStatus(UUID producesId, ProcessStatus status);
+    Optional<Process> findByProduces_IdAndVersion(UUID producesId, int version);
 }

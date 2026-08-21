@@ -119,6 +119,43 @@ class ProcessServiceImplTest {
     }
 
     @Test
+    void createIgnoresRequestedStatusAndStartsAsDraft() {
+        UUID itemId = UUID.randomUUID();
+        UUID processId = UUID.randomUUID();
+        Item item = Item.builder().id(itemId).build();
+
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(processRepository.save(any(Process.class))).thenAnswer(invocation -> {
+            Process process = invocation.getArgument(0);
+            process.setId(processId);
+            assertEquals(ProcessStatus.DRAFT, process.getStatus());
+            return process;
+        });
+        when(processRepository.findById(processId))
+                .thenAnswer(invocation -> Optional.of(Process.builder().id(processId).steps(List.of()).build()));
+
+        service.create(ProcessRequest.builder()
+                .producedItemId(itemId)
+                .version(1)
+                .status(ProcessStatus.ACTIVE)
+                .build());
+    }
+
+    @Test
+    void createThrowsWhenVersionAlreadyExistsForItem() {
+        UUID itemId = UUID.randomUUID();
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(Item.builder().id(itemId).build()));
+        when(processRepository.findByProduces_IdAndVersion(itemId, 1))
+                .thenReturn(Optional.of(Process.builder().id(UUID.randomUUID()).version(1).build()));
+
+        assertThrows(InvalidQuery.class, () -> service.create(ProcessRequest.builder()
+                .producedItemId(itemId)
+                .version(1)
+                .build()));
+        verify(processRepository, never()).save(any());
+    }
+
+    @Test
     void createWithNoSteps() {
         UUID itemId = UUID.randomUUID();
         UUID processId = UUID.randomUUID();
@@ -174,7 +211,7 @@ class ProcessServiceImplTest {
                 .id(id)
                 .produces(Item.builder().id(UUID.randomUUID()).build())
                 .version(1)
-                .status(ProcessStatus.ACTIVE)
+                .status(ProcessStatus.DRAFT)
                 .steps(existingSteps)
                 .build();
 
@@ -191,8 +228,69 @@ class ProcessServiceImplTest {
 
         assertEquals(newItem, updated.getProduces());
         assertEquals(2, updated.getVersion());
-        assertEquals(ProcessStatus.ACTIVE, updated.getStatus());
+        assertEquals(ProcessStatus.DRAFT, updated.getStatus());
         assertEquals(existingSteps, updated.getSteps());
+    }
+
+    @Test
+    void updateThrowsWhenNotDraft() {
+        UUID id = UUID.randomUUID();
+        Process process = Process.builder()
+                .id(id)
+                .produces(Item.builder().id(UUID.randomUUID()).build())
+                .version(1)
+                .status(ProcessStatus.ACTIVE)
+                .steps(List.of())
+                .build();
+        when(processRepository.findById(id)).thenReturn(Optional.of(process));
+
+        assertThrows(InvalidQuery.class, () -> service.update(ProcessRequest.builder()
+                .id(id)
+                .producedItemId(UUID.randomUUID())
+                .version(2)
+                .build()));
+        verify(processRepository, never()).save(any());
+    }
+
+    @Test
+    void updateThrowsWhenVersionTakenByAnotherProcess() {
+        UUID id = UUID.randomUUID();
+        UUID itemId = UUID.randomUUID();
+        when(processRepository.findById(id))
+                .thenReturn(Optional.of(Process.builder().id(id).status(ProcessStatus.DRAFT).steps(List.of()).build()));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(Item.builder().id(itemId).build()));
+        when(processRepository.findByProduces_IdAndVersion(itemId, 3))
+                .thenReturn(Optional.of(Process.builder().id(UUID.randomUUID()).version(3).build()));
+
+        assertThrows(InvalidQuery.class, () -> service.update(ProcessRequest.builder()
+                .id(id)
+                .producedItemId(itemId)
+                .version(3)
+                .build()));
+        verify(processRepository, never()).save(any());
+    }
+
+    @Test
+    void updateAllowsKeepingOwnVersion() {
+        UUID id = UUID.randomUUID();
+        UUID itemId = UUID.randomUUID();
+        Process process = Process.builder()
+                .id(id)
+                .status(ProcessStatus.DRAFT)
+                .produces(Item.builder().id(itemId).build())
+                .version(1)
+                .steps(List.of())
+                .build();
+        when(processRepository.findById(id)).thenReturn(Optional.of(process));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(Item.builder().id(itemId).build()));
+        when(processRepository.findByProduces_IdAndVersion(itemId, 1)).thenReturn(Optional.of(process));
+        when(processRepository.save(any(Process.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertEquals(1, service.update(ProcessRequest.builder()
+                .id(id)
+                .producedItemId(itemId)
+                .version(1)
+                .build()).getVersion());
     }
 
     @Test
@@ -212,7 +310,7 @@ class ProcessServiceImplTest {
         UUID id = UUID.randomUUID();
         UUID itemId = UUID.randomUUID();
         when(processRepository.findById(id))
-                .thenReturn(Optional.of(Process.builder().id(id).steps(List.of()).build()));
+                .thenReturn(Optional.of(Process.builder().id(id).status(ProcessStatus.DRAFT).steps(List.of()).build()));
         when(itemRepository.findById(itemId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> service.update(ProcessRequest.builder()
@@ -227,7 +325,7 @@ class ProcessServiceImplTest {
         UUID id = UUID.randomUUID();
         UUID itemId = UUID.randomUUID();
         when(processRepository.findById(id))
-                .thenReturn(Optional.of(Process.builder().id(id).steps(List.of()).build()));
+                .thenReturn(Optional.of(Process.builder().id(id).status(ProcessStatus.DRAFT).steps(List.of()).build()));
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(Item.builder().id(itemId).build()));
 
         assertThrows(InvalidQuery.class, () -> service.update(ProcessRequest.builder()
@@ -242,7 +340,7 @@ class ProcessServiceImplTest {
         UUID id = UUID.randomUUID();
         ProcessStep step1 = ProcessStep.builder().id(UUID.randomUUID()).seq(1).build();
         ProcessStep step2 = ProcessStep.builder().id(UUID.randomUUID()).seq(2).build();
-        Process process = Process.builder().id(id).steps(List.of(step1, step2)).build();
+        Process process = Process.builder().id(id).status(ProcessStatus.DRAFT).steps(List.of(step1, step2)).build();
 
         when(processRepository.findById(id)).thenReturn(Optional.of(process));
 
@@ -263,9 +361,19 @@ class ProcessServiceImplTest {
     }
 
     @Test
-    void setDraftedSetsStatus() {
+    void deleteThrowsWhenNotDraft() {
         UUID id = UUID.randomUUID();
         Process process = Process.builder().id(id).status(ProcessStatus.ACTIVE).steps(List.of()).build();
+        when(processRepository.findById(id)).thenReturn(Optional.of(process));
+
+        assertThrows(InvalidQuery.class, () -> service.delete(id));
+        verify(processRepository, never()).delete(any());
+    }
+
+    @Test
+    void setDraftedSetsStatus() {
+        UUID id = UUID.randomUUID();
+        Process process = Process.builder().id(id).status(ProcessStatus.ARCHIVED).steps(List.of()).build();
         when(processRepository.findById(id)).thenReturn(Optional.of(process));
         when(processRepository.save(any(Process.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -273,13 +381,90 @@ class ProcessServiceImplTest {
     }
 
     @Test
+    void setDraftedThrowsWhenActive() {
+        UUID id = UUID.randomUUID();
+        Process process = Process.builder().id(id).status(ProcessStatus.ACTIVE).steps(List.of()).build();
+        when(processRepository.findById(id)).thenReturn(Optional.of(process));
+
+        assertThrows(InvalidQuery.class, () -> service.setDrafted(id));
+        verify(processRepository, never()).save(any());
+    }
+
+    @Test
     void setActiveSetsStatusEvenWhenArchived() {
         UUID id = UUID.randomUUID();
-        Process process = Process.builder().id(id).status(ProcessStatus.ARCHIVED).steps(List.of()).build();
+        Process process = Process.builder()
+                .id(id)
+                .status(ProcessStatus.ARCHIVED)
+                .produces(Item.builder().id(UUID.randomUUID()).build())
+                .steps(List.of(ProcessStep.builder().id(UUID.randomUUID()).seq(1).build()))
+                .build();
         when(processRepository.findById(id)).thenReturn(Optional.of(process));
         when(processRepository.save(any(Process.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         assertEquals(ProcessStatus.ACTIVE, service.setActive(id).getStatus());
+    }
+
+    @Test
+    void setActiveThrowsWhenProcessHasNoSteps() {
+        UUID id = UUID.randomUUID();
+        Process process = Process.builder()
+                .id(id)
+                .status(ProcessStatus.DRAFT)
+                .produces(Item.builder().id(UUID.randomUUID()).build())
+                .steps(List.of())
+                .build();
+        when(processRepository.findById(id)).thenReturn(Optional.of(process));
+
+        assertThrows(InvalidQuery.class, () -> service.setActive(id));
+        verify(processRepository, never()).save(any());
+    }
+
+    @Test
+    void setActiveArchivesCurrentlyActiveProcessForSameItem() {
+        UUID itemId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        Item item = Item.builder().id(itemId).build();
+        Process currentlyActive = Process.builder()
+                .id(UUID.randomUUID())
+                .status(ProcessStatus.ACTIVE)
+                .produces(item)
+                .version(1)
+                .steps(List.of(ProcessStep.builder().id(UUID.randomUUID()).seq(1).build()))
+                .build();
+        Process process = Process.builder()
+                .id(id)
+                .status(ProcessStatus.DRAFT)
+                .produces(item)
+                .version(2)
+                .steps(List.of(ProcessStep.builder().id(UUID.randomUUID()).seq(1).build()))
+                .build();
+
+        when(processRepository.findById(id)).thenReturn(Optional.of(process));
+        when(processRepository.findFirstByProduces_IdAndStatus(itemId, ProcessStatus.ACTIVE))
+                .thenReturn(Optional.of(currentlyActive));
+        when(processRepository.save(any(Process.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Process activated = service.setActive(id);
+
+        assertEquals(ProcessStatus.ACTIVE, activated.getStatus());
+        assertEquals(ProcessStatus.ARCHIVED, currentlyActive.getStatus());
+        verify(processRepository).save(currentlyActive);
+    }
+
+    @Test
+    void setActiveIsNoOpWhenAlreadyActive() {
+        UUID id = UUID.randomUUID();
+        Process process = Process.builder()
+                .id(id)
+                .status(ProcessStatus.ACTIVE)
+                .produces(Item.builder().id(UUID.randomUUID()).build())
+                .steps(List.of(ProcessStep.builder().id(UUID.randomUUID()).seq(1).build()))
+                .build();
+        when(processRepository.findById(id)).thenReturn(Optional.of(process));
+
+        assertEquals(process, service.setActive(id));
+        verify(processRepository, never()).save(any());
     }
 
     @Test

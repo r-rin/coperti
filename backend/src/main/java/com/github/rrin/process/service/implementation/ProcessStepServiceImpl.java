@@ -46,6 +46,7 @@ public class ProcessStepServiceImpl implements ProcessStepService {
     public ProcessStep create(UUID processId, ProcessStepRequest request) {
         Process process = processRepository.findById(processId)
                 .orElseThrow(() -> new EntityNotFoundException("Process not found with id: " + processId));
+        ProcessGuard.requireDraft(process, "add step");
         Operation operation = resolveOperation(request.getOperationId());
         Item outputItem = resolveOutputItem(request.getOutputItemId());
 
@@ -74,6 +75,7 @@ public class ProcessStepServiceImpl implements ProcessStepService {
     @Override
     public ProcessStep update(ProcessStepRequest request) {
         ProcessStep step = checkIfStepExists(request.getId());
+        ProcessGuard.requireDraft(step.getProcess(), "update step");
         Operation operation = resolveOperation(request.getOperationId());
         Item outputItem = resolveOutputItem(request.getOutputItemId());
 
@@ -100,6 +102,7 @@ public class ProcessStepServiceImpl implements ProcessStepService {
     @Override
     public ProcessStep delete(UUID id) {
         ProcessStep step = checkIfStepExists(id);
+        ProcessGuard.requireDraft(step.getProcess(), "delete step");
         componentService.deleteAllForStep(id);
         stepRepository.delete(step);
         return step;

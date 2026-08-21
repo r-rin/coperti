@@ -38,8 +38,8 @@ public class ProcessComponentServiceImpl implements ProcessComponentService {
 
     @Override
     public ProcessComponent create(UUID processStepId, ProcessComponentRequest request) {
-        ProcessStep step = stepRepository.findById(processStepId)
-                .orElseThrow(() -> new EntityNotFoundException("Process step not found with id: " + processStepId));
+        ProcessStep step = checkIfStepExists(processStepId);
+        ProcessGuard.requireDraft(step.getProcess(), "add component");
 
         validateConsumable(request);
 
@@ -53,6 +53,7 @@ public class ProcessComponentServiceImpl implements ProcessComponentService {
     @Override
     public ProcessComponent update(ProcessComponentRequest request) {
         ProcessComponent component = checkIfComponentExists(request.getId());
+        ProcessGuard.requireDraft(component.getProcessStep().getProcess(), "update component");
         validateConsumable(request);
         applyConsumable(component, request);
         component.setConsumedQuantity(request.getConsumedQuantity());
@@ -67,12 +68,21 @@ public class ProcessComponentServiceImpl implements ProcessComponentService {
     @Override
     public ProcessComponent delete(UUID id) {
         ProcessComponent component = checkIfComponentExists(id);
+        ProcessGuard.requireDraft(component.getProcessStep().getProcess(), "delete component");
         componentRepository.delete(component);
         return component;
     }
 
     @Override
+    public List<ProcessComponent> getAllForStep(UUID processStepId) {
+        checkIfStepExists(processStepId);
+        return componentRepository.findAllByProcessStep_Id(processStepId);
+    }
+
+    @Override
     public List<ProcessComponent> deleteAllForStep(UUID processStepId) {
+        ProcessStep step = checkIfStepExists(processStepId);
+        ProcessGuard.requireDraft(step.getProcess(), "delete components");
         List<ProcessComponent> components = componentRepository.findAllByProcessStep_Id(processStepId);
         componentRepository.deleteAll(components);
         return components;
@@ -107,5 +117,10 @@ public class ProcessComponentServiceImpl implements ProcessComponentService {
     private ProcessComponent checkIfComponentExists(UUID id) {
         return componentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Process component not found with id: " + id));
+    }
+
+    private ProcessStep checkIfStepExists(UUID id) {
+        return stepRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Process step not found with id: " + id));
     }
 }

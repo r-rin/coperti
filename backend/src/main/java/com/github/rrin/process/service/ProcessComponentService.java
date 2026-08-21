@@ -11,5 +11,6 @@ public interface ProcessComponentService {
     ProcessComponent update(ProcessComponentRequest request);
     ProcessComponent get(UUID id);
     ProcessComponent delete(UUID id);
+    List<ProcessComponent> getAllForStep(UUID processStepId);
     List<ProcessComponent> deleteAllForStep(UUID processStepId);
 }

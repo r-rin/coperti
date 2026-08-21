@@ -6,7 +6,9 @@ import com.github.rrin.item.Item;
 import com.github.rrin.item.ItemCategory;
 import com.github.rrin.item.repository.ItemCategoryRepository;
 import com.github.rrin.item.repository.ItemRepository;
+import com.github.rrin.process.Process;
 import com.github.rrin.process.ProcessComponent;
+import com.github.rrin.process.ProcessStatus;
 import com.github.rrin.process.ProcessStep;
 import com.github.rrin.process.dto.ProcessComponentRequest;
 import com.github.rrin.process.repository.ProcessComponentRepository;
@@ -24,6 +26,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,11 +48,16 @@ class ProcessComponentServiceImplTest {
     @InjectMocks
     private ProcessComponentServiceImpl service;
 
+    private ProcessStep draftStep(UUID stepId) {
+        Process process = Process.builder().id(UUID.randomUUID()).status(ProcessStatus.DRAFT).build();
+        return ProcessStep.builder().id(stepId).process(process).build();
+    }
+
     @Test
     void createWithItemOnly() {
         UUID stepId = UUID.randomUUID();
         UUID itemId = UUID.randomUUID();
-        ProcessStep step = ProcessStep.builder().id(stepId).build();
+        ProcessStep step = draftStep(stepId);
         Item item = Item.builder().id(itemId).name("Motor").build();
 
         when(stepRepository.findById(stepId)).thenReturn(Optional.of(step));
@@ -73,7 +81,7 @@ class ProcessComponentServiceImplTest {
     void createWithCategoryOnly() {
         UUID stepId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
-        ProcessStep step = ProcessStep.builder().id(stepId).build();
+        ProcessStep step = draftStep(stepId);
         ItemCategory category = ItemCategory.builder().id(categoryId).name("Motor 24V").build();
 
         when(stepRepository.findById(stepId)).thenReturn(Optional.of(step));
@@ -94,7 +102,7 @@ class ProcessComponentServiceImplTest {
     @Test
     void createThrowsWhenBothItemAndCategorySet() {
         UUID stepId = UUID.randomUUID();
-        when(stepRepository.findById(stepId)).thenReturn(Optional.of(ProcessStep.builder().id(stepId).build()));
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
 
         assertThrows(InvalidQuery.class, () -> service.create(stepId, ProcessComponentRequest.builder()
                 .consumedItemId(UUID.randomUUID())
@@ -106,7 +114,7 @@ class ProcessComponentServiceImplTest {
     @Test
     void createThrowsWhenNeitherItemNorCategorySet() {
         UUID stepId = UUID.randomUUID();
-        when(stepRepository.findById(stepId)).thenReturn(Optional.of(ProcessStep.builder().id(stepId).build()));
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
 
         assertThrows(InvalidQuery.class, () -> service.create(stepId, ProcessComponentRequest.builder()
                 .consumedQuantity(1)
@@ -116,7 +124,7 @@ class ProcessComponentServiceImplTest {
     @Test
     void createThrowsWhenQuantityNotPositive() {
         UUID stepId = UUID.randomUUID();
-        when(stepRepository.findById(stepId)).thenReturn(Optional.of(ProcessStep.builder().id(stepId).build()));
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
 
         assertThrows(InvalidQuery.class, () -> service.create(stepId, ProcessComponentRequest.builder()
                 .consumedItemId(UUID.randomUUID())
@@ -139,7 +147,7 @@ class ProcessComponentServiceImplTest {
     void createThrowsWhenConsumedItemNotFound() {
         UUID stepId = UUID.randomUUID();
         UUID itemId = UUID.randomUUID();
-        when(stepRepository.findById(stepId)).thenReturn(Optional.of(ProcessStep.builder().id(stepId).build()));
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
         when(itemRepository.existsById(itemId)).thenReturn(false);
 
         assertThrows(EntityNotFoundException.class, () -> service.create(stepId, ProcessComponentRequest.builder()
@@ -152,7 +160,7 @@ class ProcessComponentServiceImplTest {
     void createThrowsWhenConsumableCategoryNotFound() {
         UUID stepId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
-        when(stepRepository.findById(stepId)).thenReturn(Optional.of(ProcessStep.builder().id(stepId).build()));
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
         when(categoryRepository.existsById(categoryId)).thenReturn(false);
 
         assertThrows(EntityNotFoundException.class, () -> service.create(stepId, ProcessComponentRequest.builder()
@@ -168,6 +176,7 @@ class ProcessComponentServiceImplTest {
         Item newItem = Item.builder().id(newItemId).name("Frame").build();
         ProcessComponent component = ProcessComponent.builder()
                 .id(id)
+                .processStep(draftStep(UUID.randomUUID()))
                 .consumableCategory(ItemCategory.builder().id(UUID.randomUUID()).build())
                 .consumedQuantity(2)
                 .build();
@@ -204,7 +213,10 @@ class ProcessComponentServiceImplTest {
     @Test
     void updateThrowsWhenBothOrNeitherSet() {
         UUID id = UUID.randomUUID();
-        ProcessComponent component = ProcessComponent.builder().id(id).build();
+        ProcessComponent component = ProcessComponent.builder()
+                .id(id)
+                .processStep(draftStep(UUID.randomUUID()))
+                .build();
         when(componentRepository.findById(id)).thenReturn(Optional.of(component));
 
         assertThrows(InvalidQuery.class, () -> service.update(ProcessComponentRequest.builder()
@@ -237,7 +249,10 @@ class ProcessComponentServiceImplTest {
     @Test
     void deleteComponent() {
         UUID id = UUID.randomUUID();
-        ProcessComponent component = ProcessComponent.builder().id(id).build();
+        ProcessComponent component = ProcessComponent.builder()
+                .id(id)
+                .processStep(draftStep(UUID.randomUUID()))
+                .build();
         when(componentRepository.findById(id)).thenReturn(Optional.of(component));
 
         ProcessComponent deleted = service.delete(id);
@@ -260,6 +275,7 @@ class ProcessComponentServiceImplTest {
                 ProcessComponent.builder().id(UUID.randomUUID()).build(),
                 ProcessComponent.builder().id(UUID.randomUUID()).build()
         );
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
         when(componentRepository.findAllByProcessStep_Id(stepId)).thenReturn(components);
 
         List<ProcessComponent> deleted = service.deleteAllForStep(stepId);
@@ -271,11 +287,78 @@ class ProcessComponentServiceImplTest {
     @Test
     void deleteAllForStepReturnsEmptyListWhenNoneFound() {
         UUID stepId = UUID.randomUUID();
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
         when(componentRepository.findAllByProcessStep_Id(stepId)).thenReturn(List.of());
 
         List<ProcessComponent> deleted = service.deleteAllForStep(stepId);
 
         verify(componentRepository).deleteAll(List.of());
         assertTrue(deleted.isEmpty());
+    }
+
+    @Test
+    void deleteAllForStepThrowsWhenStepNotFound() {
+        UUID stepId = UUID.randomUUID();
+        when(stepRepository.findById(stepId)).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class, () -> service.deleteAllForStep(stepId));
+    }
+
+    @Test
+    void getAllForStepReturnsComponents() {
+        UUID stepId = UUID.randomUUID();
+        List<ProcessComponent> components = List.of(ProcessComponent.builder().id(UUID.randomUUID()).build());
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
+        when(componentRepository.findAllByProcessStep_Id(stepId)).thenReturn(components);
+
+        assertEquals(components, service.getAllForStep(stepId));
+    }
+
+    @Test
+    void getAllForStepThrowsWhenStepNotFound() {
+        UUID stepId = UUID.randomUUID();
+        when(stepRepository.findById(stepId)).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class, () -> service.getAllForStep(stepId));
+    }
+
+    @Test
+    void createThrowsWhenProcessNotDraft() {
+        UUID stepId = UUID.randomUUID();
+        ProcessStep step = draftStep(stepId);
+        step.getProcess().setStatus(ProcessStatus.ACTIVE);
+        when(stepRepository.findById(stepId)).thenReturn(Optional.of(step));
+
+        assertThrows(InvalidQuery.class, () -> service.create(stepId, ProcessComponentRequest.builder()
+                .consumedItemId(UUID.randomUUID())
+                .consumedQuantity(1)
+                .build()));
+        verify(componentRepository, never()).save(any());
+    }
+
+    @Test
+    void updateThrowsWhenProcessNotDraft() {
+        UUID id = UUID.randomUUID();
+        ProcessStep step = draftStep(UUID.randomUUID());
+        step.getProcess().setStatus(ProcessStatus.ARCHIVED);
+        ProcessComponent component = ProcessComponent.builder().id(id).processStep(step).build();
+        when(componentRepository.findById(id)).thenReturn(Optional.of(component));
+
+        assertThrows(InvalidQuery.class, () -> service.update(ProcessComponentRequest.builder()
+                .id(id)
+                .consumedItemId(UUID.randomUUID())
+                .consumedQuantity(1)
+                .build()));
+        verify(componentRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteThrowsWhenProcessNotDraft() {
+        UUID id = UUID.randomUUID();
+        ProcessStep step = draftStep(UUID.randomUUID());
+        step.getProcess().setStatus(ProcessStatus.ACTIVE);
+        ProcessComponent component = ProcessComponent.builder().id(id).processStep(step).build();
+        when(componentRepository.findById(id)).thenReturn(Optional.of(component));
+
+        assertThrows(InvalidQuery.class, () -> service.delete(id));
+        verify(componentRepository, never()).delete(any());
     }
 }
