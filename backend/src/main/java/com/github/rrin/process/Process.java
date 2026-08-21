@@ -25,6 +25,7 @@ public class Process {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "produced_id")
     private Item produces;
 
     private int version;

@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
 
-public interface FundingRepository extends JpaRepository<UUID, Funding> {
+public interface FundingRepository extends JpaRepository<Funding, UUID> {
 }

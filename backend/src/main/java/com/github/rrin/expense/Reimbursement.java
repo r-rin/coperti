@@ -27,6 +27,6 @@ public class Reimbursement {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    @ColumnDefault("PENDING")
+    @ColumnDefault("'PENDING'")
     private ReimbursementStatus status;
 }
