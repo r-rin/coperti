@@ -63,6 +63,7 @@ public class ItemCategoryController {
         return toResponse(itemCategoryService.delete(id));
     }
 
+    // TODO: optional parameters to Object
     @PostMapping("/search")
     public ItemCategoryResponse[] search(
             @RequestParam(required = false) String name,
