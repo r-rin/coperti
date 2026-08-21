@@ -31,8 +31,7 @@ public class ItemCategoryServiceImpl implements ItemCategoryService {
         ItemCategory category = new ItemCategory();
         category.setName(request.getName());
         category.setChildren(Collections.emptyList());
-        Optional<ItemCategory> parent = categoryRepository.findById(request.getParentId());
-        parent.ifPresent(category::setParent);
+        category.setParent(resolveParent(request.getParentId()));
         return categoryRepository.save(category);
     }
 
@@ -40,7 +39,7 @@ public class ItemCategoryServiceImpl implements ItemCategoryService {
     public ItemCategory update(ItemCategoryRequest request) {
         ItemCategory category = checkIfCategoryExists(request.getId());
         category.setName(request.getName());
-        category.setParent(categoryRepository.findById(request.getParentId()).orElse(null));
+        category.setParent(resolveParent(request.getParentId()));
         return categoryRepository.save(category);
     }
 
@@ -99,6 +98,14 @@ public class ItemCategoryServiceImpl implements ItemCategoryService {
         return PaginatedResponse.of(
                 categoryRepository.findAllByNameContainingIgnoreCase(name, PageRequest.of(page, size))
         );
+    }
+
+    private ItemCategory resolveParent(UUID parentId) {
+        if (parentId == null) {
+            return null;
+        }
+        return categoryRepository.findById(parentId)
+                .orElseThrow(() -> new EntityNotFoundException("Parent category not found with id: " + parentId));
     }
 
     private ItemCategory checkIfCategoryExists(UUID id) {

@@ -106,6 +106,9 @@ public class ProcessStepServiceImpl implements ProcessStepService {
     }
 
     private Operation resolveOperation(UUID operationId) {
+        new ValidationCheck()
+                .check(operationId != null, "Operation id is required")
+                .throwIfAny(InvalidQuery::new);
         return operationRepository.findById(operationId)
                 .orElseThrow(() -> new EntityNotFoundException("Operation not found with id: " + operationId));
     }

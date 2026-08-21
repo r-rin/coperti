@@ -1,17 +1,13 @@
 package com.github.rrin.item.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ItemCategoryRequest {
+public class ItemCategoryResponse {
     private UUID id;
     private String name;
     private UUID parentId;

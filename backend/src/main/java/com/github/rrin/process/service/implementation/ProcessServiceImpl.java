@@ -104,6 +104,9 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     private Item resolveProducedItem(UUID producedItemId) {
+        new ValidationCheck()
+                .check(producedItemId != null, "Produced item id is required")
+                .throwIfAny(InvalidQuery::new);
         return itemRepository.findById(producedItemId)
                 .orElseThrow(() -> new EntityNotFoundException("Produced item not found with id: " + producedItemId));
     }

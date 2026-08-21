@@ -4,10 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class PaginatedResponse<T> {
-    private Iterable<T> data;
+    private List<T> data;
     private int currentPage;
     private int totalPages;
     private long totalItems;
