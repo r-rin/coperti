@@ -1,7 +1,6 @@
 package com.github.rrin.process.dto;
 
 import com.github.rrin.process.ProcessStatus;
-import com.github.rrin.process.ProcessStep;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,5 +14,5 @@ public class ProcessRequest {
     private UUID producedItemId;
     private int version;
     private ProcessStatus status;
-    List<ProcessStep> steps;
+    private List<ProcessStepRequest> steps;
 }
