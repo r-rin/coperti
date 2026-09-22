@@ -1,4 +1,4 @@
-package com.github.rrin.expense.repository;
+package com.github.rrin.expense.repository.custom;
 
 import com.github.rrin.expense.Disbursement;
 import org.springframework.data.jpa.domain.Specification;

@@ -1,6 +1,7 @@
 package com.github.rrin.expense.repository;
 
 import com.github.rrin.expense.Disbursement;
+import com.github.rrin.expense.repository.custom.DisbursementRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
