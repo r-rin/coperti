@@ -12,6 +12,8 @@ import com.github.rrin.expense.dto.filter.ExpenseFilter;
 import com.github.rrin.expense.repository.ExpenseRepository;
 import com.github.rrin.expense.repository.specs.ExpenseSpecs;
 import com.github.rrin.expense.service.ExpenseService;
+import com.github.rrin.identity.Employee;
+import com.github.rrin.identity.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,19 +28,23 @@ import java.util.UUID;
 public class ExpenseServiceImpl implements ExpenseService {
 
     private final ExpenseRepository expenseRepository;
+    private final EmployeeRepository employeeRepository;
 
     @Autowired
-    public ExpenseServiceImpl(ExpenseRepository expenseRepository) {
+    public ExpenseServiceImpl(ExpenseRepository expenseRepository, EmployeeRepository employeeRepository) {
         this.expenseRepository = expenseRepository;
+        this.employeeRepository = employeeRepository;
     }
 
     @Override
     public Expense create(ExpenseRequest request) {
         new ValidationCheck()
                 .check(request.getAmount() != null && request.getAmount().doubleValue() > 0, "Amount must be greater than 0")
+                .check(request.getEmployeeId() != null, "Employee id is required")
                 .throwIfAny(ValidationException::new);
 
         Expense expense = Expense.builder()
+                .employee(getEmployee(request.getEmployeeId()))
                 .amount(request.getAmount())
                 .description(request.getDescription())
                 .date(request.getDate())
@@ -91,6 +97,12 @@ public class ExpenseServiceImpl implements ExpenseService {
                 .throwIfAny(InvalidQuery::new);
 
         return expenseRepository.sumAmount(ExpenseSpecs.matching(filter));
+    }
+
+    private Employee getEmployee(UUID id) {
+        return employeeRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException("Employee with id " + id + " not found")
+        );
     }
 
     private Expense getIfExists(UUID id){
