@@ -1,8 +1,7 @@
 package com.github.rrin.expense.service.implementation;
 
 import com.github.rrin.exception.DateRangeConstraintValidator;
-import com.github.rrin.exception.PageConstraintsValidator;
-import com.github.rrin.exception.ValidationCheck;
+import com.github.rrin.exception.PageConstraintValidator;
 import com.github.rrin.exception.types.EntityNotFoundException;
 import com.github.rrin.exception.types.InvalidQuery;
 import com.github.rrin.expense.Budget;
@@ -56,7 +55,7 @@ public class BudgetServiceImpl implements BudgetService {
 
     @Override
     public Page<Budget> search(BudgetFilter filter, int page, int size) {
-        new PageConstraintsValidator(page, size).throwIfAny(InvalidQuery::new);
+        new PageConstraintValidator(page, size).throwIfAny(InvalidQuery::new);
         new DateRangeConstraintValidator(filter.getFromDate(), filter.getToDate()).throwIfAny(InvalidQuery::new);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));

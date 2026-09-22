@@ -1,7 +1,7 @@
 package com.github.rrin.expense.service.implementation;
 
 import com.github.rrin.exception.DateRangeConstraintValidator;
-import com.github.rrin.exception.PageConstraintsValidator;
+import com.github.rrin.exception.PageConstraintValidator;
 import com.github.rrin.exception.ValidationCheck;
 import com.github.rrin.exception.types.EntityNotFoundException;
 import com.github.rrin.exception.types.InvalidQuery;
@@ -76,7 +76,7 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     public Page<Expense> search(ExpenseFilter filter, int page, int size) {
-        new PageConstraintsValidator(page, size)
+        new PageConstraintValidator(page, size)
                 .throwIfAny(InvalidQuery::new);
         new DateRangeConstraintValidator(filter.getFromDate(), filter.getToDate())
                 .throwIfAny(InvalidQuery::new);
