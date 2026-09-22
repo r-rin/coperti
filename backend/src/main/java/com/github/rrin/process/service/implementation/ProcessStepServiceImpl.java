@@ -2,7 +2,8 @@ package com.github.rrin.process.service.implementation;
 
 import com.github.rrin.exception.ValidationCheck;
 import com.github.rrin.exception.types.EntityNotFoundException;
-import com.github.rrin.exception.types.InvalidQuery;
+import com.github.rrin.exception.types.ValidationException;
+import com.github.rrin.exception.types.ConflictException;
 import com.github.rrin.item.Item;
 import com.github.rrin.item.repository.ItemRepository;
 import com.github.rrin.process.Operation;
@@ -52,9 +53,11 @@ public class ProcessStepServiceImpl implements ProcessStepService {
 
         new ValidationCheck()
                 .check(request.getOutputQuantity() > 0, "Output quantity must be greater than 0")
+                .throwIfAny(ValidationException::new);
+        new ValidationCheck()
                 .check(process.getSteps().stream().noneMatch(s -> s.getSeq() == request.getSeq()),
                         "Sequence " + request.getSeq() + " already exists in this process")
-                .throwIfAny(InvalidQuery::new);
+                .throwIfAny(ConflictException::new);
 
         ProcessStep step = new ProcessStep();
         step.setProcess(process);
@@ -82,10 +85,12 @@ public class ProcessStepServiceImpl implements ProcessStepService {
         // components are managed via ProcessComponentService, not through step update
         new ValidationCheck()
                 .check(request.getOutputQuantity() > 0, "Output quantity must be greater than 0")
+                .throwIfAny(ValidationException::new);
+        new ValidationCheck()
                 .check(step.getProcess().getSteps().stream()
                                 .noneMatch(s -> s.getSeq() == request.getSeq() && !s.getId().equals(step.getId())),
                         "Sequence " + request.getSeq() + " already exists in this process")
-                .throwIfAny(InvalidQuery::new);
+                .throwIfAny(ConflictException::new);
 
         step.setSeq(request.getSeq());
         step.setOperation(operation);
@@ -111,7 +116,7 @@ public class ProcessStepServiceImpl implements ProcessStepService {
     private Operation resolveOperation(UUID operationId) {
         new ValidationCheck()
                 .check(operationId != null, "Operation id is required")
-                .throwIfAny(InvalidQuery::new);
+                .throwIfAny(ValidationException::new);
         return operationRepository.findById(operationId)
                 .orElseThrow(() -> new EntityNotFoundException("Operation not found with id: " + operationId));
     }

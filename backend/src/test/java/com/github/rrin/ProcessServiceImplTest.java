@@ -1,7 +1,8 @@
 package com.github.rrin;
 
 import com.github.rrin.exception.types.EntityNotFoundException;
-import com.github.rrin.exception.types.InvalidQuery;
+import com.github.rrin.exception.types.ValidationException;
+import com.github.rrin.exception.types.ConflictException;
 import com.github.rrin.item.Item;
 import com.github.rrin.item.repository.ItemRepository;
 import com.github.rrin.process.Process;
@@ -148,7 +149,7 @@ class ProcessServiceImplTest {
         when(processRepository.findByProduces_IdAndVersion(itemId, 1))
                 .thenReturn(Optional.of(Process.builder().id(UUID.randomUUID()).version(1).build()));
 
-        assertThrows(InvalidQuery.class, () -> service.create(ProcessRequest.builder()
+        assertThrows(ConflictException.class, () -> service.create(ProcessRequest.builder()
                 .producedItemId(itemId)
                 .version(1)
                 .build()));
@@ -195,7 +196,7 @@ class ProcessServiceImplTest {
         UUID itemId = UUID.randomUUID();
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(Item.builder().id(itemId).build()));
 
-        assertThrows(InvalidQuery.class, () -> service.create(ProcessRequest.builder()
+        assertThrows(ValidationException.class, () -> service.create(ProcessRequest.builder()
                 .producedItemId(itemId)
                 .version(0)
                 .build()));
@@ -244,7 +245,7 @@ class ProcessServiceImplTest {
                 .build();
         when(processRepository.findById(id)).thenReturn(Optional.of(process));
 
-        assertThrows(InvalidQuery.class, () -> service.update(ProcessRequest.builder()
+        assertThrows(ConflictException.class, () -> service.update(ProcessRequest.builder()
                 .id(id)
                 .producedItemId(UUID.randomUUID())
                 .version(2)
@@ -262,7 +263,7 @@ class ProcessServiceImplTest {
         when(processRepository.findByProduces_IdAndVersion(itemId, 3))
                 .thenReturn(Optional.of(Process.builder().id(UUID.randomUUID()).version(3).build()));
 
-        assertThrows(InvalidQuery.class, () -> service.update(ProcessRequest.builder()
+        assertThrows(ConflictException.class, () -> service.update(ProcessRequest.builder()
                 .id(id)
                 .producedItemId(itemId)
                 .version(3)
@@ -328,7 +329,7 @@ class ProcessServiceImplTest {
                 .thenReturn(Optional.of(Process.builder().id(id).status(ProcessStatus.DRAFT).steps(List.of()).build()));
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(Item.builder().id(itemId).build()));
 
-        assertThrows(InvalidQuery.class, () -> service.update(ProcessRequest.builder()
+        assertThrows(ValidationException.class, () -> service.update(ProcessRequest.builder()
                 .id(id)
                 .producedItemId(itemId)
                 .version(-1)
@@ -366,7 +367,7 @@ class ProcessServiceImplTest {
         Process process = Process.builder().id(id).status(ProcessStatus.ACTIVE).steps(List.of()).build();
         when(processRepository.findById(id)).thenReturn(Optional.of(process));
 
-        assertThrows(InvalidQuery.class, () -> service.delete(id));
+        assertThrows(ConflictException.class, () -> service.delete(id));
         verify(processRepository, never()).delete(any());
     }
 
@@ -386,7 +387,7 @@ class ProcessServiceImplTest {
         Process process = Process.builder().id(id).status(ProcessStatus.ACTIVE).steps(List.of()).build();
         when(processRepository.findById(id)).thenReturn(Optional.of(process));
 
-        assertThrows(InvalidQuery.class, () -> service.setDrafted(id));
+        assertThrows(ConflictException.class, () -> service.setDrafted(id));
         verify(processRepository, never()).save(any());
     }
 
@@ -416,7 +417,7 @@ class ProcessServiceImplTest {
                 .build();
         when(processRepository.findById(id)).thenReturn(Optional.of(process));
 
-        assertThrows(InvalidQuery.class, () -> service.setActive(id));
+        assertThrows(ConflictException.class, () -> service.setActive(id));
         verify(processRepository, never()).save(any());
     }
 

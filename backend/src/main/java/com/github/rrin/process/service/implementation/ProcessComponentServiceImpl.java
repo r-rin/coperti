@@ -2,7 +2,7 @@ package com.github.rrin.process.service.implementation;
 
 import com.github.rrin.exception.ValidationCheck;
 import com.github.rrin.exception.types.EntityNotFoundException;
-import com.github.rrin.exception.types.InvalidQuery;
+import com.github.rrin.exception.types.ValidationException;
 import com.github.rrin.item.repository.ItemCategoryRepository;
 import com.github.rrin.item.repository.ItemRepository;
 import com.github.rrin.process.ProcessComponent;
@@ -95,7 +95,7 @@ public class ProcessComponentServiceImpl implements ProcessComponentService {
         new ValidationCheck()
                 .check(itemSet ^ categorySet, "Exactly one of consumedItemId or consumableCategoryId must be set")
                 .check(request.getConsumedQuantity() > 0, "Consumed quantity must be greater than 0")
-                .throwIfAny(InvalidQuery::new);
+                .throwIfAny(ValidationException::new);
 
         new ValidationCheck()
                 .check(!itemSet || itemRepository.existsById(request.getConsumedItemId()),

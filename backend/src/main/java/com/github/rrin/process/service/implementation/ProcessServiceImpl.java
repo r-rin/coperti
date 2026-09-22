@@ -2,7 +2,8 @@ package com.github.rrin.process.service.implementation;
 
 import com.github.rrin.exception.ValidationCheck;
 import com.github.rrin.exception.types.EntityNotFoundException;
-import com.github.rrin.exception.types.InvalidQuery;
+import com.github.rrin.exception.types.ValidationException;
+import com.github.rrin.exception.types.ConflictException;
 import com.github.rrin.item.Item;
 import com.github.rrin.item.repository.ItemRepository;
 import com.github.rrin.process.Process;
@@ -93,7 +94,7 @@ public class ProcessServiceImpl implements ProcessService {
         new ValidationCheck()
                 .check(process.getStatus() != ProcessStatus.ACTIVE,
                         "Active process cannot be moved back to draft, archive it first")
-                .throwIfAny(InvalidQuery::new);
+                .throwIfAny(ConflictException::new);
         return setStatus(process, ProcessStatus.DRAFT);
     }
 
@@ -106,7 +107,7 @@ public class ProcessServiceImpl implements ProcessService {
         new ValidationCheck()
                 .check(process.getSteps() != null && !process.getSteps().isEmpty(),
                         "Process must have at least one step to be activated")
-                .throwIfAny(InvalidQuery::new);
+                .throwIfAny(ConflictException::new);
         // at most one active process per produced item: archive the current one
         processRepository.findFirstByProduces_IdAndStatus(process.getProduces().getId(), ProcessStatus.ACTIVE)
                 .ifPresent(current -> setStatus(current, ProcessStatus.ARCHIVED));
@@ -127,14 +128,14 @@ public class ProcessServiceImpl implements ProcessService {
         processRepository.findByProduces_IdAndVersion(producedItemId, version)
                 .filter(existing -> !existing.getId().equals(selfId))
                 .ifPresent(existing -> {
-                    throw new InvalidQuery("Version " + version + " already exists for produced item: " + producedItemId);
+                    throw new ConflictException("Version " + version + " already exists for produced item: " + producedItemId);
                 });
     }
 
     private Item resolveProducedItem(UUID producedItemId) {
         new ValidationCheck()
                 .check(producedItemId != null, "Produced item id is required")
-                .throwIfAny(InvalidQuery::new);
+                .throwIfAny(ValidationException::new);
         return itemRepository.findById(producedItemId)
                 .orElseThrow(() -> new EntityNotFoundException("Produced item not found with id: " + producedItemId));
     }
@@ -142,7 +143,7 @@ public class ProcessServiceImpl implements ProcessService {
     private void validateVersion(int version) {
         new ValidationCheck()
                 .check(version > 0, "Version must be greater than 0")
-                .throwIfAny(InvalidQuery::new);
+                .throwIfAny(ValidationException::new);
     }
 
     private Process checkIfProcessExists(UUID id) {

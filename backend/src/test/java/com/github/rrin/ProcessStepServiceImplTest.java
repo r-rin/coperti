@@ -1,7 +1,8 @@
 package com.github.rrin;
 
 import com.github.rrin.exception.types.EntityNotFoundException;
-import com.github.rrin.exception.types.InvalidQuery;
+import com.github.rrin.exception.types.ValidationException;
+import com.github.rrin.exception.types.ConflictException;
 import com.github.rrin.item.Item;
 import com.github.rrin.item.repository.ItemRepository;
 import com.github.rrin.process.Operation;
@@ -181,7 +182,7 @@ class ProcessStepServiceImplTest {
         when(operationRepository.findById(operationId))
                 .thenReturn(Optional.of(Operation.builder().id(operationId).build()));
 
-        assertThrows(InvalidQuery.class, () -> service.create(processId, ProcessStepRequest.builder()
+        assertThrows(ValidationException.class, () -> service.create(processId, ProcessStepRequest.builder()
                 .seq(1)
                 .operationId(operationId)
                 .outputQuantity(0)
@@ -199,7 +200,7 @@ class ProcessStepServiceImplTest {
         when(operationRepository.findById(operationId))
                 .thenReturn(Optional.of(Operation.builder().id(operationId).build()));
 
-        assertThrows(InvalidQuery.class, () -> service.create(processId, ProcessStepRequest.builder()
+        assertThrows(ConflictException.class, () -> service.create(processId, ProcessStepRequest.builder()
                 .seq(1)
                 .operationId(operationId)
                 .outputQuantity(1)
@@ -268,7 +269,7 @@ class ProcessStepServiceImplTest {
         when(operationRepository.findById(operationId))
                 .thenReturn(Optional.of(Operation.builder().id(operationId).build()));
 
-        assertThrows(InvalidQuery.class, () -> service.update(ProcessStepRequest.builder()
+        assertThrows(ConflictException.class, () -> service.update(ProcessStepRequest.builder()
                 .id(stepId)
                 .seq(2)
                 .operationId(operationId)
@@ -345,7 +346,7 @@ class ProcessStepServiceImplTest {
         process.setStatus(ProcessStatus.ACTIVE);
         when(processRepository.findById(processId)).thenReturn(Optional.of(process));
 
-        assertThrows(InvalidQuery.class, () -> service.create(processId, ProcessStepRequest.builder()
+        assertThrows(ConflictException.class, () -> service.create(processId, ProcessStepRequest.builder()
                 .seq(1)
                 .operationId(UUID.randomUUID())
                 .outputQuantity(1)
@@ -361,7 +362,7 @@ class ProcessStepServiceImplTest {
         ProcessStep step = ProcessStep.builder().id(stepId).seq(1).process(process).build();
         when(stepRepository.findById(stepId)).thenReturn(Optional.of(step));
 
-        assertThrows(InvalidQuery.class, () -> service.update(ProcessStepRequest.builder()
+        assertThrows(ConflictException.class, () -> service.update(ProcessStepRequest.builder()
                 .id(stepId)
                 .seq(1)
                 .operationId(UUID.randomUUID())
@@ -378,7 +379,7 @@ class ProcessStepServiceImplTest {
         ProcessStep step = ProcessStep.builder().id(stepId).process(process).build();
         when(stepRepository.findById(stepId)).thenReturn(Optional.of(step));
 
-        assertThrows(InvalidQuery.class, () -> service.delete(stepId));
+        assertThrows(ConflictException.class, () -> service.delete(stepId));
         verify(stepRepository, never()).delete(any());
     }
 }

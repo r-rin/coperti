@@ -1,7 +1,8 @@
 package com.github.rrin;
 
 import com.github.rrin.exception.types.EntityNotFoundException;
-import com.github.rrin.exception.types.InvalidQuery;
+import com.github.rrin.exception.types.ValidationException;
+import com.github.rrin.exception.types.ConflictException;
 import com.github.rrin.item.Item;
 import com.github.rrin.item.ItemCategory;
 import com.github.rrin.item.repository.ItemCategoryRepository;
@@ -104,7 +105,7 @@ class ProcessComponentServiceImplTest {
         UUID stepId = UUID.randomUUID();
         when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
 
-        assertThrows(InvalidQuery.class, () -> service.create(stepId, ProcessComponentRequest.builder()
+        assertThrows(ValidationException.class, () -> service.create(stepId, ProcessComponentRequest.builder()
                 .consumedItemId(UUID.randomUUID())
                 .consumableCategoryId(UUID.randomUUID())
                 .consumedQuantity(1)
@@ -116,7 +117,7 @@ class ProcessComponentServiceImplTest {
         UUID stepId = UUID.randomUUID();
         when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
 
-        assertThrows(InvalidQuery.class, () -> service.create(stepId, ProcessComponentRequest.builder()
+        assertThrows(ValidationException.class, () -> service.create(stepId, ProcessComponentRequest.builder()
                 .consumedQuantity(1)
                 .build()));
     }
@@ -126,7 +127,7 @@ class ProcessComponentServiceImplTest {
         UUID stepId = UUID.randomUUID();
         when(stepRepository.findById(stepId)).thenReturn(Optional.of(draftStep(stepId)));
 
-        assertThrows(InvalidQuery.class, () -> service.create(stepId, ProcessComponentRequest.builder()
+        assertThrows(ValidationException.class, () -> service.create(stepId, ProcessComponentRequest.builder()
                 .consumedItemId(UUID.randomUUID())
                 .consumedQuantity(0)
                 .build()));
@@ -219,13 +220,13 @@ class ProcessComponentServiceImplTest {
                 .build();
         when(componentRepository.findById(id)).thenReturn(Optional.of(component));
 
-        assertThrows(InvalidQuery.class, () -> service.update(ProcessComponentRequest.builder()
+        assertThrows(ValidationException.class, () -> service.update(ProcessComponentRequest.builder()
                 .id(id)
                 .consumedItemId(UUID.randomUUID())
                 .consumableCategoryId(UUID.randomUUID())
                 .consumedQuantity(1)
                 .build()));
-        assertThrows(InvalidQuery.class, () -> service.update(ProcessComponentRequest.builder()
+        assertThrows(ValidationException.class, () -> service.update(ProcessComponentRequest.builder()
                 .id(id)
                 .consumedQuantity(1)
                 .build()));
@@ -327,7 +328,7 @@ class ProcessComponentServiceImplTest {
         step.getProcess().setStatus(ProcessStatus.ACTIVE);
         when(stepRepository.findById(stepId)).thenReturn(Optional.of(step));
 
-        assertThrows(InvalidQuery.class, () -> service.create(stepId, ProcessComponentRequest.builder()
+        assertThrows(ConflictException.class, () -> service.create(stepId, ProcessComponentRequest.builder()
                 .consumedItemId(UUID.randomUUID())
                 .consumedQuantity(1)
                 .build()));
@@ -342,7 +343,7 @@ class ProcessComponentServiceImplTest {
         ProcessComponent component = ProcessComponent.builder().id(id).processStep(step).build();
         when(componentRepository.findById(id)).thenReturn(Optional.of(component));
 
-        assertThrows(InvalidQuery.class, () -> service.update(ProcessComponentRequest.builder()
+        assertThrows(ConflictException.class, () -> service.update(ProcessComponentRequest.builder()
                 .id(id)
                 .consumedItemId(UUID.randomUUID())
                 .consumedQuantity(1)
@@ -358,7 +359,7 @@ class ProcessComponentServiceImplTest {
         ProcessComponent component = ProcessComponent.builder().id(id).processStep(step).build();
         when(componentRepository.findById(id)).thenReturn(Optional.of(component));
 
-        assertThrows(InvalidQuery.class, () -> service.delete(id));
+        assertThrows(ConflictException.class, () -> service.delete(id));
         verify(componentRepository, never()).delete(any());
     }
 }
