@@ -67,7 +67,7 @@ public class BudgetServiceImpl implements BudgetService {
     public BigDecimal sum(BudgetFilter filter) {
         new DateRangeConstraintValidator(filter.getFromDate(), filter.getToDate()).throwIfAny(InvalidQuery::new);
 
-        return budgetRepository.sumAmountByFilter(filter);
+        return budgetRepository.sumAmount(BudgetSpecs.matching(filter));
     }
 
     private Budget getIfExists(UUID id) {

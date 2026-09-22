@@ -6,7 +6,7 @@ import com.github.rrin.expense.dto.DisbursementRequest;
 import com.github.rrin.expense.dto.filter.DisbursementFilter;
 import org.springframework.data.domain.Page;
 
-import java.util.List;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface DisbursementService {
@@ -15,4 +15,5 @@ public interface DisbursementService {
     Disbursement getById(UUID id);
 
     Page<Disbursement> search(DisbursementFilter filter, int page, int size);
+    BigDecimal sum(DisbursementFilter filter);
 }

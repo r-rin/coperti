@@ -22,7 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -67,6 +67,13 @@ public class DisbursementServiceImpl implements DisbursementService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
         return disbursementRepository.findAll(DisbursementSpecs.matching(filter), pageable);
+    }
+
+    @Override
+    public BigDecimal sum(DisbursementFilter filter) {
+        new DateRangeConstraintValidator(filter.getFromDate(), filter.getToDate()).throwIfAny(InvalidQuery::new);
+
+        return disbursementRepository.sumAmount(DisbursementSpecs.matching(filter));
     }
 
     private Employee getEmployee(UUID id) {

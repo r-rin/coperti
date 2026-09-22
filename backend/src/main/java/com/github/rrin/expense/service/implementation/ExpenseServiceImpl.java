@@ -4,6 +4,7 @@ import com.github.rrin.exception.DateRangeConstraintValidator;
 import com.github.rrin.exception.PageConstraintsValidator;
 import com.github.rrin.exception.ValidationCheck;
 import com.github.rrin.exception.types.EntityNotFoundException;
+import com.github.rrin.exception.types.InvalidQuery;
 import com.github.rrin.exception.types.ValidationException;
 import com.github.rrin.expense.Expense;
 import com.github.rrin.expense.dto.ExpenseRequest;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -75,12 +77,20 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     public Page<Expense> search(ExpenseFilter filter, int page, int size) {
         new PageConstraintsValidator(page, size)
-                .throwIfAny(ValidationException::new);
+                .throwIfAny(InvalidQuery::new);
         new DateRangeConstraintValidator(filter.getFromDate(), filter.getToDate())
-                .throwIfAny(ValidationException::new);
+                .throwIfAny(InvalidQuery::new);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
         return expenseRepository.findAll(ExpenseSpecs.matching(filter), pageable);
+    }
+
+    @Override
+    public BigDecimal sum(ExpenseFilter filter) {
+        new DateRangeConstraintValidator(filter.getFromDate(), filter.getToDate())
+                .throwIfAny(InvalidQuery::new);
+
+        return expenseRepository.sumAmount(ExpenseSpecs.matching(filter));
     }
 
     private Expense getIfExists(UUID id){
