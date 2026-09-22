@@ -28,4 +28,6 @@ public class Disbursement {
     private BigDecimal amount;
 
     private LocalDate date;
+
+    private DisbursementStatus status;
 }
