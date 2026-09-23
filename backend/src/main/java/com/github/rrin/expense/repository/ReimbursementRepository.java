@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.util.UUID;
 
 public interface ReimbursementRepository extends JpaRepository<Reimbursement, UUID>, JpaSpecificationExecutor<Reimbursement>, ReimbursementRepositoryCustom {
+    boolean existsByExpenseId(UUID expenseId);
 }

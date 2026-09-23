@@ -44,6 +44,13 @@ public class DisbursementServiceImpl implements DisbursementService {
 
     @Override
     public Disbursement create(DisbursementRequest request) {
+        // funding math divides this advance up later, so an absent or negative amount cannot be tolerated
+        new ValidationCheck()
+                .check(request.getAmount() != null && request.getAmount().compareTo(BigDecimal.ZERO) > 0,
+                        "Amount must be greater than 0")
+                .check(request.getEmployeeId() != null, "Employee id is required")
+                .throwIfAny(ValidationException::new);
+
         Disbursement disbursement = Disbursement.builder()
                 .employee(getEmployee(request.getEmployeeId()))
                 .amount(request.getAmount())

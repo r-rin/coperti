@@ -8,8 +8,8 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 
-public class ReibursementRepositoryCustomImpl extends SpecificationSumSupport<Reimbursement> implements ReimbursementRepositoryCustom {
-    public ReibursementRepositoryCustomImpl(EntityManager entityManager) {
+public class ReimbursementRepositoryCustomImpl extends SpecificationSumSupport<Reimbursement> implements ReimbursementRepositoryCustom {
+    public ReimbursementRepositoryCustomImpl(EntityManager entityManager) {
         super(entityManager, Reimbursement.class);
     }
 

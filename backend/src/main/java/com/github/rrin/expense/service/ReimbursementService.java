@@ -11,6 +11,10 @@ import java.util.UUID;
 
 public interface ReimbursementService {
     Reimbursement create(ReimbursementRequest reimbursementRequest);
+
+    /** Raises what the facility owes for whatever of the expense funding did not cover. */
+    Reimbursement createForShortfall(UUID expenseId);
+
     Reimbursement update(ReimbursementRequest reimbursementRequest);
     Reimbursement get(UUID reimbursementId);
     Reimbursement delete(UUID reimbursementId);

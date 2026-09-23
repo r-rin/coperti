@@ -19,11 +19,11 @@ public class Reimbursement {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @OneToOne
+    @OneToOne(optional = false)
+    @JoinColumn(name = "expense_id", nullable = false, unique = true)
     private Expense expense;
 
     @Column(name = "amount", precision=10, scale = 2)
-    @JoinColumn(name = "expense_id", nullable = false, unique = true)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
