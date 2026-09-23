@@ -7,9 +7,11 @@ import com.github.rrin.exception.types.InvalidQuery;
 import com.github.rrin.expense.Budget;
 import com.github.rrin.expense.dto.BudgetRequest;
 import com.github.rrin.expense.dto.filter.BudgetFilter;
+import com.github.rrin.expense.dto.filter.DisbursementFilter;
 import com.github.rrin.expense.repository.BudgetRepository;
 import com.github.rrin.expense.repository.specs.BudgetSpecs;
 import com.github.rrin.expense.service.BudgetService;
+import com.github.rrin.expense.service.DisbursementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,10 +26,12 @@ import java.util.UUID;
 public class BudgetServiceImpl implements BudgetService {
 
     private BudgetRepository budgetRepository;
+    private DisbursementService disbursementService;
 
     @Autowired
-    public BudgetServiceImpl(BudgetRepository budgetRepository) {
+    public BudgetServiceImpl(BudgetRepository budgetRepository, DisbursementService disbursementService) {
         this.budgetRepository = budgetRepository;
+        this.disbursementService = disbursementService;
     }
 
 
@@ -49,8 +53,12 @@ public class BudgetServiceImpl implements BudgetService {
 
     @Override
     public BigDecimal getFacilityFloat() {
-        // TODO: Budget.amount (all) − Disbursement.amount (all) "how much is still free to hand out"
-        return null;
+        BigDecimal totalSum = sum(BudgetFilter.builder().build());
+        BigDecimal totalSpent = disbursementService.sum(DisbursementFilter.builder().build());
+        if (totalSum.compareTo(totalSpent) > 0) {
+            return totalSum.subtract(totalSpent);
+        }
+        return BigDecimal.ZERO;
     }
 
     @Override
