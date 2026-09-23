@@ -1,0 +1,207 @@
+/* Palette tokens: the validated dataviz reference instance. Defined on the app shell so
+   every module's pages inherit them. Dark steps are selected for the dark surface,
+   not an automatic flip. */
+.root {
+  --surface-1: #fcfcfb;
+  --surface-2: #f3f2ef;
+  --border: #dedcd5;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #77756e;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --seq-100: #cde2fb;
+  --seq-450: #2a78d6;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --critical: #d03b3b;
+
+  min-height: 100dvh;
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .root {
+    --surface-1: #1a1a19;
+    --surface-2: #111110;
+    --border: #383835;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #96958c;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --seq-100: #184f95;
+    --seq-450: #3987e5;
+  }
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  min-height: 100dvh;
+}
+
+.sidebar {
+  background: var(--surface-1);
+  border-right: 1px solid var(--border);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.brand {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  padding: 0 8px;
+}
+
+.brandSub {
+  display: block;
+  font-size: 12px;
+  font-weight: 450;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.groupToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.groupToggle:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.groupToggle:focus-visible,
+.navLink:focus-visible {
+  outline: 2px solid var(--seq-450);
+  outline-offset: -2px;
+}
+
+.groupToggleCurrent {
+  color: var(--text-primary);
+}
+
+.chevron {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--text-muted);
+  transition: transform 150ms ease;
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+/* sub-branches hang off a guide line under their module */
+.branch {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 14px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+}
+
+.branch[hidden] {
+  display: none;
+}
+
+.navLink {
+  display: block;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.navLink:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.navLinkActive {
+  background: var(--seq-100);
+  color: var(--text-primary);
+  font-weight: 550;
+}
+
+/* pinned to the bottom of the sidebar, below however many modules there are */
+.language {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.languageLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.main {
+  padding: 28px 32px 56px;
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron,
+  .groupToggle,
+  .navLink {
+    transition: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .main {
+    padding: 20px 16px 48px;
+  }
+}
