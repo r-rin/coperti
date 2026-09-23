@@ -45,6 +45,12 @@ public class BudgetController {
         return budgetService.sum(filter);
     }
 
+    // cash still in the facility: everything funded in, less every advance that actually left
+    @GetMapping("/float")
+    public BigDecimal getFacilityFloat() {
+        return budgetService.getFacilityFloat();
+    }
+
     private BudgetResponse toResponse(Budget budget) {
         return BudgetResponse.builder()
                 .id(budget.getId())

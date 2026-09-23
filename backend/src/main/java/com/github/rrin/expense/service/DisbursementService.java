@@ -7,12 +7,15 @@ import com.github.rrin.expense.dto.filter.DisbursementFilter;
 import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public interface DisbursementService {
     Disbursement create(DisbursementRequest request);
     Disbursement updateStatus(UUID id, DisbursementStatus status);
     Disbursement getById(UUID id);
+    /** The employee's OPEN advances, oldest first. */
+    List<Disbursement> getOpenFor(UUID employeeId);
 
     Page<Disbursement> search(DisbursementFilter filter, int page, int size);
     BigDecimal sum(DisbursementFilter filter);

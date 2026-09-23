@@ -7,8 +7,8 @@ import com.github.rrin.expense.dto.AllocationRequest;
  * {@link FundingService}, which enforces the integrity rules regardless of who decided.
  * Disbursement-centric — "this advance paid for these receipts".
  * <p>
- * A shortfall left on an expense is not turned into a Reimbursement here; an expense may still be
- * topped up from another disbursement. Raising what the facility owes is a deliberate, separate act.
+ * A shortfall left on an expense is simply what the facility still owes the employee; it may be
+ * topped up from another disbursement or settled through {@link SettlementService}.
  */
 public interface AllocationService {
     AllocationResult allocateManual(AllocationRequest request);

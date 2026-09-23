@@ -11,6 +11,7 @@ import com.github.rrin.expense.repository.FundingRepository;
 import com.github.rrin.expense.service.DisbursementService;
 import com.github.rrin.expense.service.ExpenseService;
 import com.github.rrin.expense.service.implementation.FundingServiceImpl;
+import com.github.rrin.identity.Employee;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,13 +45,14 @@ class FundingServiceImplTest {
 
     private final UUID disbursementId = UUID.randomUUID();
     private final UUID expenseId = UUID.randomUUID();
+    private final Employee worker = Employee.builder().id(UUID.randomUUID()).name("Worker").build();
 
     private Disbursement disbursement(String amount, DisbursementStatus status) {
-        return Disbursement.builder().id(disbursementId).amount(new BigDecimal(amount)).status(status).build();
+        return Disbursement.builder().id(disbursementId).employee(worker).amount(new BigDecimal(amount)).status(status).build();
     }
 
     private Expense expense(String amount) {
-        return Expense.builder().id(expenseId).amount(new BigDecimal(amount)).build();
+        return Expense.builder().id(expenseId).employee(worker).amount(new BigDecimal(amount)).build();
     }
 
     private FundingRequest request(String amount) {
@@ -139,6 +141,22 @@ class FundingServiceImplTest {
     void cannotDrawFromAClosedDisbursement() {
         when(disbursementService.getById(disbursementId)).thenReturn(disbursement("100.00", DisbursementStatus.CLOSED));
         when(expenseService.get(expenseId)).thenReturn(expense("50.00"));
+        when(fundingRepository.sumAmountCoveredByDisbursementId(disbursementId)).thenReturn(BigDecimal.ZERO);
+        when(fundingRepository.sumAmountCoveredByExpenseId(expenseId)).thenReturn(BigDecimal.ZERO);
+
+        assertThrows(ConflictException.class, () -> service.create(request("30.00")));
+        verify(fundingRepository, never()).saveAndFlush(any(Funding.class));
+    }
+
+    @Test
+    void cannotCoverAnotherEmployeesExpense() {
+        Expense someoneElses = Expense.builder()
+                .id(expenseId)
+                .employee(Employee.builder().id(UUID.randomUUID()).name("Other").build())
+                .amount(new BigDecimal("50.00"))
+                .build();
+        when(disbursementService.getById(disbursementId)).thenReturn(disbursement("100.00", DisbursementStatus.OPEN));
+        when(expenseService.get(expenseId)).thenReturn(someoneElses);
         when(fundingRepository.sumAmountCoveredByDisbursementId(disbursementId)).thenReturn(BigDecimal.ZERO);
         when(fundingRepository.sumAmountCoveredByExpenseId(expenseId)).thenReturn(BigDecimal.ZERO);
 

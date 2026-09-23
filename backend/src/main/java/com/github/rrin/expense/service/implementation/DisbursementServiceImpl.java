@@ -24,6 +24,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -80,6 +81,12 @@ public class DisbursementServiceImpl implements DisbursementService {
     @Override
     public Disbursement getById(UUID id) {
         return getIfExists(id);
+    }
+
+    @Override
+    public List<Disbursement> getOpenFor(UUID employeeId) {
+        return disbursementRepository.findByEmployeeIdAndStatusOrderByDateAscIdAsc(
+                getEmployee(employeeId).getId(), DisbursementStatus.OPEN);
     }
 
     @Override

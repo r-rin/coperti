@@ -20,6 +20,10 @@ final class FundingGuard {
                                 BigDecimal remaining,
                                 BigDecimal shortfall) {
         new ValidationCheck()
+                // a worker's debt is only settled by cash that worker actually received
+                .check(disbursement.getEmployee().getId().equals(expense.getEmployee().getId()),
+                        "Cannot cover expense " + expense.getId() + " from disbursement " + disbursement.getId()
+                                + ": they belong to different employees")
                 .check(disbursement.getStatus() == DisbursementStatus.OPEN,
                         "Cannot draw from disbursement " + disbursement.getId() + ": it is "
                                 + disbursement.getStatus() + ", only OPEN disbursements have money left")
