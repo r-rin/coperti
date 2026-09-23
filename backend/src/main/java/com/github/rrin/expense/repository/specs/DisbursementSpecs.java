@@ -6,6 +6,7 @@ import com.github.rrin.expense.dto.filter.DisbursementFilter;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
+import java.util.Set;
 import java.util.UUID;
 
 public class DisbursementSpecs {
@@ -31,10 +32,10 @@ public class DisbursementSpecs {
         };
     }
 
-    public static Specification<Disbursement> statusIs(DisbursementStatus status) {
+    public static Specification<Disbursement> statusIn(Set<DisbursementStatus> statuses) {
         return (root, query, cb) -> {
-            if (status == null) return null;
-            return cb.equal(root.get("status"), status);
+            if (statuses == null || statuses.isEmpty()) return null;
+            return root.get("status").in(statuses);
         };
     }
 
@@ -43,7 +44,7 @@ public class DisbursementSpecs {
                 fromDate(filter.getFromDate()),
                 toDate(filter.getToDate()),
                 givenToEmployee(filter.getGivenToEmployee()),
-                statusIs(filter.getStatus())
+                statusIn(filter.getStatuses())
         );
     }
 }

@@ -5,6 +5,7 @@ import com.github.rrin.exception.PageConstraintValidator;
 import com.github.rrin.exception.types.EntityNotFoundException;
 import com.github.rrin.exception.types.InvalidQuery;
 import com.github.rrin.expense.Budget;
+import com.github.rrin.expense.DisbursementStatus;
 import com.github.rrin.expense.dto.BudgetRequest;
 import com.github.rrin.expense.dto.filter.BudgetFilter;
 import com.github.rrin.expense.dto.filter.DisbursementFilter;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.EnumSet;
 import java.util.UUID;
 
 @Service
@@ -54,7 +56,10 @@ public class BudgetServiceImpl implements BudgetService {
     @Override
     public BigDecimal getFacilityFloat() {
         BigDecimal totalSum = sum(BudgetFilter.builder().build());
-        BigDecimal totalSpent = disbursementService.sum(DisbursementFilter.builder().build());
+        // CANCELLED advances never left the till, so they are not money spent
+        BigDecimal totalSpent = disbursementService.sum(DisbursementFilter.builder()
+                .statuses(EnumSet.of(DisbursementStatus.OPEN, DisbursementStatus.CLOSED))
+                .build());
         if (totalSum.compareTo(totalSpent) > 0) {
             return totalSum.subtract(totalSpent);
         }

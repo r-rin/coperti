@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -17,5 +18,5 @@ public class DisbursementFilter {
     private UUID givenToEmployee;
     private LocalDate fromDate;
     private LocalDate toDate;
-    private DisbursementStatus status;
+    private Set<DisbursementStatus> statuses;
 }

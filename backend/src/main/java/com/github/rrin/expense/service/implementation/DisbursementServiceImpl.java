@@ -4,11 +4,14 @@ import com.github.rrin.exception.DateRangeConstraintValidator;
 import com.github.rrin.exception.PageConstraintValidator;
 import com.github.rrin.exception.types.EntityNotFoundException;
 import com.github.rrin.exception.types.InvalidQuery;
+import com.github.rrin.exception.types.ValidationException;
+import com.github.rrin.exception.ValidationCheck;
 import com.github.rrin.expense.Disbursement;
 import com.github.rrin.expense.DisbursementStatus;
 import com.github.rrin.expense.dto.DisbursementRequest;
 import com.github.rrin.expense.dto.filter.DisbursementFilter;
 import com.github.rrin.expense.repository.DisbursementRepository;
+import com.github.rrin.expense.repository.FundingRepository;
 import com.github.rrin.expense.repository.specs.DisbursementSpecs;
 import com.github.rrin.expense.service.DisbursementService;
 import com.github.rrin.identity.Employee;
@@ -26,13 +29,17 @@ import java.util.UUID;
 @Service
 public class DisbursementServiceImpl implements DisbursementService {
 
-    private DisbursementRepository disbursementRepository;
-    private EmployeeRepository employeeRepository;
+    private final DisbursementRepository disbursementRepository;
+    private final EmployeeRepository employeeRepository;
+    private final FundingRepository fundingRepository;
 
     @Autowired
-    public DisbursementServiceImpl(DisbursementRepository disbursementRepository, EmployeeRepository employeeRepository) {
+    public DisbursementServiceImpl(DisbursementRepository disbursementRepository,
+                                   EmployeeRepository employeeRepository,
+                                   FundingRepository fundingRepository) {
         this.disbursementRepository = disbursementRepository;
         this.employeeRepository = employeeRepository;
+        this.fundingRepository = fundingRepository;
     }
 
     @Override
@@ -41,14 +48,24 @@ public class DisbursementServiceImpl implements DisbursementService {
                 .employee(getEmployee(request.getEmployeeId()))
                 .amount(request.getAmount())
                 .date(request.getDate())
-                .status(request.getStatus())
+                // handing cash over always starts an unsettled advance; a requested status is ignored
+                .status(DisbursementStatus.OPEN)
                 .build();
         return disbursementRepository.save(disbursement);
     }
 
     @Override
     public Disbursement updateStatus(UUID id, DisbursementStatus status) {
+        new ValidationCheck()
+                .check(status != null, "Status is required")
+                .throwIfAny(ValidationException::new);
+
         Disbursement disbursement = getIfExists(id);
+        DisbursementGuard.requireTransition(disbursement, status);
+        if (status == DisbursementStatus.CANCELLED) {
+            DisbursementGuard.requireNothingFunded(disbursement, fundingRepository.existsByDisbursementId(id));
+        }
+
         disbursement.setStatus(status);
         return disbursementRepository.save(disbursement);
     }
