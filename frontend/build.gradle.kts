@@ -33,3 +33,10 @@ tasks.register<NpmTask>("runDev") {
     dependsOn(tasks.npmInstall)
     npmCommand.set(listOf("run", "dev"))
 }
+
+tasks.register<NpmTask>("run") {
+    description = "Runs the frontend in production mode"
+    group = "application"
+    dependsOn(tasks.npmInstall)
+    npmCommand.set(listOf("run", "start"))
+}
