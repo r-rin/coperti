@@ -1,6 +1,7 @@
 "use client";
 
-import { App, Button, Form, Input, InputNumber, Popconfirm, Select, Space, Table, Tag } from "antd";
+import { DownOutlined, FilePdfOutlined, MoreOutlined, RightOutlined } from "@ant-design/icons";
+import { App, Button, Dropdown, Form, Input, InputNumber, Select, Space, Table, Tag } from "antd";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -17,6 +18,9 @@ import {
 } from "@/lib/types";
 import { createDisbursement, updateDisbursementStatus } from "../actions";
 import styles from "../expenses.module.css";
+import { loadCoverage } from "./coverage";
+import { CoveredExpenses } from "./CoveredExpenses";
+import { downloadAdvanceReport } from "./report/download";
 
 const STATUS_COLOR: Record<DisbursementStatus, string> = {
   OPEN: "blue",
@@ -35,10 +39,13 @@ export function DisbursementTable({
 }) {
   const router = useRouter();
   const params = useSearchParams();
-  const { message } = App.useApp();
-  const { t, money } = useI18n();
+  const { message, modal } = App.useApp();
+  const { t, money, locale } = useI18n();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  // kept across pages, so one report can gather advances from several pages and workers
+  const [selected, setSelected] = useState<string[]>([]);
+  const [reporting, setReporting] = useState(false);
   const [form] = Form.useForm<{ employeeId: string; amount: number; date: string }>();
 
   const names = new Map(employees.map((e) => [e.id, e.name]));
@@ -61,6 +68,33 @@ export function DisbursementTable({
         message.error(result.error ?? t.common.somethingWentWrong);
       }
     });
+  }
+
+  function confirmStatus(row: Disbursement, status: "CLOSED" | "CANCELLED") {
+    const closing = status === "CLOSED";
+    modal.confirm({
+      title: closing ? t.advances.closeConfirm : t.advances.cancelConfirm,
+      content: closing ? t.advances.closeConfirmNote : t.advances.cancelConfirmNote,
+      okButtonProps: { danger: !closing },
+      onOk: () =>
+        act(() => updateDisbursementStatus(row.id, status), closing ? t.advances.closed : t.advances.cancelled),
+    });
+  }
+
+  async function report(ids: string[]) {
+    setReporting(true);
+    try {
+      const result = await loadCoverage(ids);
+      if (!result.ok) {
+        message.error(result.error);
+        return;
+      }
+      await downloadAdvanceReport(result.data, names, locale);
+    } catch {
+      message.error(t.advances.reportFailed);
+    } finally {
+      setReporting(false);
+    }
   }
 
   function submit(values: { employeeId: string; amount: number; date: string }) {
@@ -111,12 +145,39 @@ export function DisbursementTable({
           <h2 className={styles.tableTitle}>
             {t.advances.tableTitle} <span className={styles.mono}>({page.totalItems})</span>
           </h2>
+          {selected.length ? (
+            <div className={styles.selectionBar}>
+              <span className={styles.selectionHint}>{t.advances.selectionHint}</span>
+              <Button onClick={() => setSelected([])}>{t.advances.clearSelection}</Button>
+              <Button type="primary" icon={<FilePdfOutlined />} loading={reporting} onClick={() => report(selected)}>
+                {t.advances.reportSelected(selected.length)}
+              </Button>
+            </div>
+          ) : null}
         </div>
         <Table<Disbursement>
           rowKey="id"
           dataSource={page.data}
           size="middle"
           loading={pending}
+          rowSelection={{
+            selectedRowKeys: selected,
+            preserveSelectedRowKeys: true,
+            onChange: (keys) => setSelected(keys as string[]),
+          }}
+          expandable={{
+            expandedRowRender: (row) => <CoveredExpenses disbursementId={row.id} />,
+            expandIcon: ({ expanded, onExpand, record }) => (
+              <Button
+                type="text"
+                size="small"
+                aria-label={expanded ? t.advances.collapse : t.advances.expand}
+                title={expanded ? t.advances.collapse : t.advances.expand}
+                icon={expanded ? <DownOutlined /> : <RightOutlined />}
+                onClick={(event) => onExpand(record, event)}
+              />
+            ),
+          }}
           pagination={{
             current: page.currentPage + 1,
             pageSize: page.pageSize,
@@ -156,7 +217,7 @@ export function DisbursementTable({
             {
               title: "",
               key: "actions",
-              width: 250,
+              width: 150,
               render: (_, row) => (
                 <Space size="small">
                   <Link href={`/expenses/disbursements/${row.id}`}>
@@ -164,26 +225,24 @@ export function DisbursementTable({
                       {t.advances.allocate}
                     </Button>
                   </Link>
-                  <Popconfirm
-                    title={t.advances.closeConfirm}
-                    description={t.advances.closeConfirmNote}
-                    onConfirm={() => act(() => updateDisbursementStatus(row.id, "CLOSED"), t.advances.closed)}
+                  <Dropdown
+                    trigger={["click"]}
+                    menu={{
+                      items: [
+                        { key: "report", icon: <FilePdfOutlined />, label: t.advances.report, disabled: reporting },
+                        { type: "divider" },
+                        { key: "close", label: t.advances.close, disabled: row.status !== "OPEN" },
+                        { key: "cancel", label: t.advances.cancel, danger: true, disabled: row.status !== "OPEN" },
+                      ],
+                      onClick: ({ key }) => {
+                        if (key === "report") report([row.id]);
+                        if (key === "close") confirmStatus(row, "CLOSED");
+                        if (key === "cancel") confirmStatus(row, "CANCELLED");
+                      },
+                    }}
                   >
-                    <Button size="small" disabled={row.status !== "OPEN"}>
-                      {t.advances.close}
-                    </Button>
-                  </Popconfirm>
-                  <Popconfirm
-                    title={t.advances.cancelConfirm}
-                    description={t.advances.cancelConfirmNote}
-                    onConfirm={() =>
-                      act(() => updateDisbursementStatus(row.id, "CANCELLED"), t.advances.cancelled)
-                    }
-                  >
-                    <Button size="small" danger disabled={row.status !== "OPEN"}>
-                      {t.advances.cancel}
-                    </Button>
-                  </Popconfirm>
+                    <Button size="small" type="text" icon={<MoreOutlined />} aria-label={t.advances.more} />
+                  </Dropdown>
                 </Space>
               ),
             },

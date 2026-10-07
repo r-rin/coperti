@@ -386,3 +386,15 @@
   font-size: 12px;
   color: var(--text-muted);
 }
+
+/* an advance row unfolded: the expenses it paid for, inset under its parent row */
+.coveredBox {
+  padding: 4px 0 8px;
+}
+
+.coveredTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}

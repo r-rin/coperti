@@ -2,6 +2,7 @@ import "server-only";
 
 import { api } from "@/lib/api";
 import type {
+  AdvanceCoverage,
   Budget,
   Disbursement,
   DisbursementStatus,
@@ -44,6 +45,8 @@ export const getEmployees = () => api.get<Employee[]>("/employee");
 export const getExpenses = (q: ExpenseQuery = {}) =>
   api.get<PaginatedResponse<Expense>>("/expense", { ...q });
 
+export const getExpense = (id: string) => api.get<Expense>(`/expense/${id}`);
+
 export const getExpenseSum = (q: ExpenseQuery = {}) =>
   api.get<number>("/expense/sum", { ...q, page: undefined, size: undefined });
 
@@ -76,6 +79,33 @@ export const getRemainingBalance = (id: string) =>
 
 export const getShortfall = (expenseId: string) =>
   api.get<number>(`/funding/expense/${expenseId}/shortfall`);
+
+/** An advance with the expenses it paid for, joined here because the backend serves them apart. */
+export async function getAdvanceCoverage(id: string): Promise<AdvanceCoverage> {
+  const [disbursement, remaining, fundings] = await Promise.all([
+    getDisbursement(id),
+    getRemainingBalance(id),
+    getFundingByDisbursement(id),
+  ]);
+  const expenses = await Promise.all(
+    fundings
+      .filter((funding) => funding.expenseId)
+      .map(async (funding) => {
+        const expenseId = funding.expenseId as string;
+        const [expense, shortfall] = await Promise.all([getExpense(expenseId), getShortfall(expenseId)]);
+        return {
+          expenseId,
+          date: expense.date,
+          description: expense.description,
+          amount: expense.amount,
+          coveredHere: funding.amountCovered,
+          shortfall,
+        };
+      }),
+  );
+  expenses.sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
+  return { disbursement, remaining, expenses };
+}
 
 /** Name lookup for tables that only carry an employee id. */
 export async function employeeNameMap(): Promise<Map<string, string>> {

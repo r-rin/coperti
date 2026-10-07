@@ -87,3 +87,20 @@ export interface SettlementResponse {
   leftOnNewAdvance: number;
   stillOwed: number;
 }
+
+/** One expense seen from one advance: what it cost, what this advance paid, what is still owed overall. */
+export interface CoveredExpense {
+  expenseId: string;
+  date: string | null;
+  description: string | null;
+  amount: number;
+  coveredHere: number;
+  shortfall: number;
+}
+
+/** An advance together with every expense it paid for. */
+export interface AdvanceCoverage {
+  disbursement: Disbursement;
+  remaining: number;
+  expenses: CoveredExpense[];
+}
