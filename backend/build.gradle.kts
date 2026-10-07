@@ -1,3 +1,6 @@
+import org.codehaus.groovy.ast.tools.GeneralUtils.args
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 plugins {
     id("java")
     id("org.springframework.boot") version "4.1.0"
@@ -45,4 +48,11 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     jvmArgs("-javaagent:${mockitoAgent.asPath}")
+}
+
+tasks.register<BootRun>("bootRunLocal") {
+    group = "application"
+    mainClass.set("com.github.rrin.Main")
+    classpath = sourceSets.main.get().runtimeClasspath
+    args("--spring.profiles.active=local")
 }

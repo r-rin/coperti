@@ -23,6 +23,11 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+tasks.register("runLocal") {
+    dependsOn("backend:bootRunLocal")
+    dependsOn("frontend:runDev")
+}
+
 tasks.test {
     useJUnitPlatform()
 }
