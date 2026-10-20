@@ -87,7 +87,7 @@ public class ExpenseServiceImpl implements ExpenseService {
         new DateRangeConstraintValidator(filter.getFromDate(), filter.getToDate())
                 .throwIfAny(InvalidQuery::new);
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date", "createdAt"));
         return expenseRepository.findAll(ExpenseSpecs.matching(filter), pageable);
     }
 

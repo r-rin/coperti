@@ -17,4 +17,5 @@ public class ExpenseFilter {
     LocalDate toDate;
     String search;
     UUID issuedByEmployee;
+    Boolean uncoveredOnly;
 }

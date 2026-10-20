@@ -94,7 +94,7 @@ public class DisbursementServiceImpl implements DisbursementService {
         new PageConstraintValidator(page,size).throwIfAny(InvalidQuery::new);
         new DateRangeConstraintValidator(filter.getFromDate(), filter.getToDate()).throwIfAny(InvalidQuery::new);
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date", "createdAt"));
         return disbursementRepository.findAll(DisbursementSpecs.matching(filter), pageable);
     }
 

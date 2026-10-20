@@ -2,7 +2,8 @@ package com.github.rrin.production;
 
 public enum ProductionOrderStatus {
     DRAFT,
-    ACTIVE,
+    RELEASED,
+    IN_PROGRESS,
     COMPLETED,
-    ARCHIVED,
+    CANCELLED,
 }
