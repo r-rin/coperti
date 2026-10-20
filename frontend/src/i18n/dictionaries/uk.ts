@@ -95,6 +95,7 @@ export const uk: Dictionary = {
     owedOnPageNote: "Ще не покрито жодним авансом",
     filterTo: "До",
     containsPlaceholder: "Містить…",
+    uncoveredOnly: "Лише непокриті",
     apply: "Застосувати",
     reset: "Скинути",
     tableTitle: "Витрати",

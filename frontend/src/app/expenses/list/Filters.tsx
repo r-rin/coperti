@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Select } from "antd";
+import { Button, Checkbox, Input, Select } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -21,6 +21,7 @@ export function Filters({ employees }: { employees: Employee[] }) {
   const [toDate, setToDate] = useState(params.get("toDate") ?? "");
   const [search, setSearch] = useState(params.get("search") ?? "");
   const [employee, setEmployee] = useState(params.get("issuedByEmployee") ?? "");
+  const [uncoveredOnly, setUncoveredOnly] = useState(params.get("uncoveredOnly") === "true");
 
   function apply() {
     const next = new URLSearchParams();
@@ -28,6 +29,7 @@ export function Filters({ employees }: { employees: Employee[] }) {
     if (toDate) next.set("toDate", toDate);
     if (search) next.set("search", search);
     if (employee) next.set("issuedByEmployee", employee);
+    if (uncoveredOnly) next.set("uncoveredOnly", "true");
     router.push(`/expenses/list?${next.toString()}`);
   }
 
@@ -36,6 +38,7 @@ export function Filters({ employees }: { employees: Employee[] }) {
     setToDate("");
     setSearch("");
     setEmployee("");
+    setUncoveredOnly(false);
     router.push("/expenses/list");
   }
 
@@ -80,6 +83,13 @@ export function Filters({ employees }: { employees: Employee[] }) {
           style={{ width: 200 }}
         />
       </label>
+      <Checkbox
+        checked={uncoveredOnly}
+        onChange={(e) => setUncoveredOnly(e.target.checked)}
+        style={{ lineHeight: "32px" }}
+      >
+        {t.expenses.uncoveredOnly}
+      </Checkbox>
       <Button type="primary" onClick={apply}>
         {t.expenses.apply}
       </Button>

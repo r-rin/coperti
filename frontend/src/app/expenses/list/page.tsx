@@ -27,6 +27,7 @@ export default async function ExpenseListPage(props: PageProps<"/expenses/list">
     toDate: one(params.toDate),
     search: one(params.search),
     issuedByEmployee: one(params.issuedByEmployee),
+    uncoveredOnly: one(params.uncoveredOnly) === "true" || undefined,
     page: Number(one(params.page) ?? 0),
     size: 20,
   };

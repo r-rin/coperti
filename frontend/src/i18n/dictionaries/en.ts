@@ -89,6 +89,7 @@ export const en = {
     owedOnPageNote: "Not yet covered by any advance",
     filterTo: "To",
     containsPlaceholder: "Contains…",
+    uncoveredOnly: "Only uncovered",
     apply: "Apply",
     reset: "Reset",
     tableTitle: "Expenses",

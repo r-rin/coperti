@@ -18,6 +18,7 @@ export interface ExpenseQuery {
   toDate?: string;
   search?: string;
   issuedByEmployee?: string;
+  uncoveredOnly?: boolean;
   page?: number;
   size?: number;
 }
