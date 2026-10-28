@@ -1,2 +1,2 @@
 rootProject.name = "coperti"
-include ("backend", "frontend")
+include ("backend", "frontend", "telegram-bot")

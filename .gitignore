@@ -5,6 +5,12 @@ build/
 !**/src/test/**/build/
 .kotlin
 
+### Python (telegram-bot) ###
+.venv/
+__pycache__/
+.pytest_cache/
+telegram-bot/.env
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml

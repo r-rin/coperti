@@ -22,6 +22,13 @@ public class ItemController {
         this.itemService = itemService;
     }
 
+    @GetMapping
+    public List<ItemResponse> search(@RequestParam String search) {
+        return itemService.search(search).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     @GetMapping("/{id}")
     public ItemResponse get(@PathVariable UUID id) {
         return toResponse(itemService.get(id));

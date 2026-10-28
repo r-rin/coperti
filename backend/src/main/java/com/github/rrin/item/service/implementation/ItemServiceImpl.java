@@ -1,6 +1,8 @@
 package com.github.rrin.item.service.implementation;
 
+import com.github.rrin.exception.ValidationCheck;
 import com.github.rrin.exception.types.EntityNotFoundException;
+import com.github.rrin.exception.types.InvalidQuery;
 import com.github.rrin.item.Item;
 import com.github.rrin.item.ItemCategory;
 import com.github.rrin.item.ItemType;
@@ -102,6 +104,14 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<Item> getItemsByType(ItemType type) {
         return itemRepository.findByType(type);
+    }
+
+    @Override
+    public List<Item> search(String text) {
+        new ValidationCheck()
+                .check(text != null && !text.isBlank(), "Search text is required")
+                .throwIfAny(InvalidQuery::new);
+        return itemRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(text.trim());
     }
 
     private Item checkIfItemExists(UUID id) {

@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface ItemRepository extends JpaRepository<Item, UUID> {
     List<Item> findByCategory(ItemCategory category);
     List<Item> findByType(ItemType type);
+    List<Item> findTop20ByNameContainingIgnoreCaseOrderByNameAsc(String name);
 }

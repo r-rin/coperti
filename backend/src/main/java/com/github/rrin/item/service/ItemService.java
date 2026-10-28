@@ -19,4 +19,7 @@ public interface ItemService {
 
     List<Item> getItemsByCategory(UUID categoryId);
     List<Item> getItemsByType(ItemType type);
+
+    /** Case-insensitive name match, capped at 20 results; meant for pickers, not reports. */
+    List<Item> search(String text);
 }

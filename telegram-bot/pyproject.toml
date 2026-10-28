@@ -1,0 +1,10 @@
+[project]
+name = "coperti-bot"
+version = "1.0"
+description = "Telegram bot for recording warehouse receipts and issues in Coperti"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
