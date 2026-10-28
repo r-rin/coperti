@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo } from "react";
 
-import { formatMoney } from "@/lib/format";
+import { formatDateTime, formatMoney, formatQty } from "@/lib/format";
 import type { Locale } from "./config";
 import { dictionaries } from "./dictionaries";
 
@@ -25,6 +25,8 @@ export function useI18n() {
       locale,
       t: dictionaries[locale],
       money: (value: number | null | undefined) => formatMoney(value, locale),
+    qty: (value: number | null | undefined) => formatQty(value, locale),
+    dateTime: (value: string | null | undefined) => formatDateTime(value, locale),
     }),
     [locale],
   );

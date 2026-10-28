@@ -8,21 +8,6 @@ export type DisbursementStatus = "OPEN" | "CLOSED" | "CANCELLED";
 
 export const DISBURSEMENT_STATUSES: DisbursementStatus[] = ["OPEN", "CLOSED", "CANCELLED"];
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  pageSize: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-}
-
-export interface Employee {
-  id: string;
-  name: string;
-}
-
 export interface Expense {
   id: string;
   employeeId: string | null;

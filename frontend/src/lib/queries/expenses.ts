@@ -6,7 +6,6 @@ import type {
   Budget,
   Disbursement,
   DisbursementStatus,
-  Employee,
   EmployeeBalance,
   Expense,
   Funding,
@@ -40,8 +39,6 @@ export interface BudgetQuery {
   page?: number;
   size?: number;
 }
-
-export const getEmployees = () => api.get<Employee[]>("/employee");
 
 export const getExpenses = (q: ExpenseQuery = {}) =>
   api.get<PaginatedResponse<Expense>>("/expense", { ...q });
@@ -106,10 +103,4 @@ export async function getAdvanceCoverage(id: string): Promise<AdvanceCoverage> {
   );
   expenses.sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
   return { disbursement, remaining, expenses };
-}
-
-/** Name lookup for tables that only carry an employee id. */
-export async function employeeNameMap(): Promise<Map<string, string>> {
-  const employees = await getEmployees();
-  return new Map(employees.map((e) => [e.id, e.name]));
 }

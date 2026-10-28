@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { type ActionResult, runAction } from "@/lib/actions";
 import { ApiError, api } from "@/lib/api";
 import type {
   AllocationResponse,
@@ -11,26 +12,17 @@ import type {
 } from "@/lib/types";
 
 /**
- * Every mutation the UI can perform. These run on the Next server and are the only
+ * Every mutation the expenses pages can perform. These run on the Next server and are the only
  * writers to the backend — a Client Component imports the function, not the API.
  */
 
-export interface ActionResult {
-  ok: boolean;
-  error?: string;
-}
-
-async function run(work: () => Promise<unknown>, ...paths: string[]): Promise<ActionResult> {
-  try {
+// the ledger touches several screens at once: an allocation changes an advance,
+// an expense's coverage and the facility float together. The backend's reply is dropped:
+// these screens re-read everything after a write anyway.
+function run(work: () => Promise<unknown>, ...paths: string[]): Promise<ActionResult> {
+  return runAction(async () => {
     await work();
-  } catch (error) {
-    if (error instanceof ApiError) return { ok: false, error: error.message };
-    throw error;
-  }
-  // the ledger touches several screens at once: an allocation changes an advance,
-  // an expense's coverage and the facility float together
-  paths.forEach((path) => revalidatePath(path));
-  return { ok: true };
+  }, ...paths);
 }
 
 const ALL = ["/expenses", "/expenses/list", "/expenses/disbursements", "/expenses/budgets"];
