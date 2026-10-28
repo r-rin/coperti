@@ -42,6 +42,26 @@ class ItemServiceImplTest {
     }
 
     @Test
+    void getByIdsLooksUpAll() {
+        UUID id = UUID.randomUUID();
+        Item screw = Item.builder().id(id).name("Screw").build();
+        when(itemRepository.findAllById(List.of(id))).thenReturn(List.of(screw));
+        assertEquals(List.of(screw), service.getByIds(List.of(id)));
+    }
+
+    @Test
+    void getByIdsWithNothingAsked() {
+        assertEquals(List.of(), service.getByIds(List.of()));
+        verify(itemRepository, never()).findAllById(any());
+    }
+
+    @Test
+    void getByIdsCapsTheBatch() {
+        List<UUID> tooMany = java.util.stream.Stream.generate(UUID::randomUUID).limit(501).toList();
+        assertThrows(InvalidQuery.class, () -> service.getByIds(tooMany));
+    }
+
+    @Test
     void searchRejectsBlankText() {
         assertThrows(InvalidQuery.class, () -> service.search("  "));
         assertThrows(InvalidQuery.class, () -> service.search(null));

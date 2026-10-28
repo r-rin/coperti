@@ -5,4 +5,5 @@
 export * from "./catalog";
 export * from "./common";
 export * from "./expenses";
+export * from "./inventory";
 export * from "./telegram";

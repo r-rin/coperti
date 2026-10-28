@@ -1,0 +1,446 @@
+/* The user guide's look. Palette tokens come from the app shell, so it follows light/dark like every page. */
+
+.guide {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+/* ---- hero ---- */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  padding: 32px 32px 28px;
+  margin-bottom: 28px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--series-1) 22%, transparent) 0%, transparent 55%),
+    radial-gradient(90% 120% at 0% 100%, color-mix(in srgb, var(--series-3) 18%, transparent) 0%, transparent 60%),
+    var(--surface-1);
+}
+
+.heroIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  font-size: 24px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--series-1), var(--series-3));
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--series-1) 35%, transparent);
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--series-1);
+  margin: 0 0 6px;
+}
+
+.heroTitle {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin: 0 0 10px;
+}
+
+.lead {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 70ch;
+}
+
+/* ---- sections ---- */
+
+.section {
+  margin: 0 0 36px;
+  scroll-margin-top: 16px;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sectionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  font-size: 16px;
+  color: var(--series-1);
+  background: color-mix(in srgb, var(--series-1) 12%, transparent);
+  flex: none;
+}
+
+.sectionTitle {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.section p,
+.section li {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.section p {
+  margin: 0 0 12px;
+}
+
+.section strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ---- numbered steps with a connecting rail ---- */
+
+.steps {
+  list-style: none;
+  counter-reset: step;
+  margin: 8px 0 16px;
+  padding: 0;
+}
+
+.step {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 18px 48px;
+}
+
+.step::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--series-1);
+  background: var(--surface-1);
+  border: 2px solid var(--series-1);
+}
+
+.step::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 32px;
+  bottom: 2px;
+  width: 2px;
+  background: color-mix(in srgb, var(--series-1) 25%, transparent);
+}
+
+.step:last-child::after {
+  display: none;
+}
+
+.stepTitle {
+  display: block;
+  font-size: 16px;
+  font-weight: 620;
+  color: var(--text-primary);
+  margin: 4px 0 4px;
+}
+
+.stepBody {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ---- callouts ---- */
+
+.callout {
+  --accent: var(--series-1);
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  margin: 12px 0 16px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-left: 4px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-1));
+}
+
+.calloutTip {
+  --accent: var(--good);
+}
+
+.calloutWarning {
+  --accent: var(--warning);
+}
+
+.calloutIcon {
+  font-size: 20px;
+  color: var(--accent);
+  line-height: 1.4;
+}
+
+.calloutTitle {
+  display: block;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.calloutBody {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ---- formulas ---- */
+
+.formula {
+  margin: 12px 0 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.formulaName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-1);
+}
+
+.formulaBody {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 6px;
+  padding: 20px 16px;
+  font-size: 16px;
+}
+
+.formulaNote {
+  padding: 0 16px 14px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.var {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--series-1) 14%, var(--surface-1));
+  border: 1px solid color-mix(in srgb, var(--series-1) 30%, transparent);
+  white-space: nowrap;
+}
+
+.result {
+  background: linear-gradient(135deg, var(--series-1), var(--series-3));
+  border: none;
+  color: #fff;
+}
+
+.op {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0 2px;
+}
+
+.fn {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--series-1);
+}
+
+/* ---- worked example ---- */
+
+.example {
+  margin: 12px 0 18px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, var(--series-3) 55%, transparent);
+  background: color-mix(in srgb, var(--series-3) 5%, var(--surface-1));
+}
+
+.exampleTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--series-3);
+  margin: 0 0 8px;
+}
+
+.example p,
+.example li {
+  font-size: 15px;
+}
+
+.exampleTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  margin-top: 6px;
+}
+
+.exampleTable td {
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.exampleTable td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  font-weight: 550;
+}
+
+.exampleTable tr:last-child td {
+  border-bottom: none;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+/* ---- a UI label as it appears on screen ---- */
+
+.ui {
+  display: inline-block;
+  padding: 0 7px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--text-primary);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* ---- cards (start page) ---- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 12px 0 8px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.card:hover {
+  border-color: var(--series-1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--series-1) 14%, transparent);
+}
+
+.cardIcon {
+  font-size: 22px;
+  color: var(--series-1);
+}
+
+.cardTitle {
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.cardText {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* ---- glossary ---- */
+
+.terms {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface-1);
+}
+
+.term {
+  display: grid;
+  grid-template-columns: minmax(170px, 240px) 1fr;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+}
+
+.term:last-child {
+  border-bottom: none;
+}
+
+.termMeaning {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 24px 20px;
+  }
+
+  .heroTitle {
+    font-size: 24px;
+  }
+
+  .term {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}

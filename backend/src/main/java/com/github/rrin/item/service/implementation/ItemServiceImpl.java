@@ -114,6 +114,16 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(text.trim());
     }
 
+    static final int MAX_IDS = 500;
+
+    @Override
+    public List<Item> getByIds(List<UUID> ids) {
+        new ValidationCheck()
+                .check(ids != null && ids.size() <= MAX_IDS, "Between 0 and " + MAX_IDS + " ids can be looked up at once")
+                .throwIfAny(InvalidQuery::new);
+        return ids.isEmpty() ? List.of() : itemRepository.findAllById(ids);
+    }
+
     private Item checkIfItemExists(UUID id) {
         return itemRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Item with id " + id + " not found"));

@@ -1,5 +1,6 @@
 "use client";
 
+import { InboxOutlined, QuestionCircleOutlined, TeamOutlined, WalletOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -7,6 +8,14 @@ import { useState } from "react";
 import { useI18n } from "@/i18n/I18nProvider";
 import { isLeafActive, isModuleActive, MODULES } from "./modules";
 import styles from "./shell.module.css";
+
+/** One icon per module, keyed like MODULES; modules.ts stays plain data. */
+const ICONS: Record<string, React.ComponentType> = {
+  expenses: WalletOutlined,
+  inventory: InboxOutlined,
+  people: TeamOutlined,
+  help: QuestionCircleOutlined,
+};
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -21,6 +30,7 @@ export function Sidebar() {
         const current = isModuleActive(pathname, module);
         const open = toggled[module.key] ?? current;
         const listId = `nav-${module.key}`;
+        const Icon = ICONS[module.key];
 
         return (
           <div key={module.key} className={styles.group}>
@@ -31,7 +41,14 @@ export function Sidebar() {
               aria-controls={listId}
               onClick={() => setToggled((prev) => ({ ...prev, [module.key]: !open }))}
             >
-              <span>{t.nav[module.label]}</span>
+              <span className={styles.groupLabel}>
+                {Icon && (
+                  <span className={styles.groupIcon} aria-hidden="true">
+                    <Icon />
+                  </span>
+                )}
+                {t.nav[module.label]}
+              </span>
               <svg
                 className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`}
                 viewBox="0 0 16 16"

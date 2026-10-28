@@ -29,6 +29,13 @@ public class ItemController {
                 .toList();
     }
 
+    @GetMapping("/by-ids")
+    public List<ItemResponse> byIds(@RequestParam(required = false) List<UUID> ids) {
+        return itemService.getByIds(ids == null ? List.of() : ids).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     @GetMapping("/{id}")
     public ItemResponse get(@PathVariable UUID id) {
         return toResponse(itemService.get(id));

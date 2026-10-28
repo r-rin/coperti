@@ -32,10 +32,33 @@ export const MODULES: readonly NavModule[] = [
     ],
   },
   {
+    key: "inventory",
+    label: "inventory",
+    basePath: "/inventory",
+    children: [
+      { href: "/inventory", label: "stock", exact: true },
+      { href: "/inventory/movements", label: "movements" },
+      { href: "/inventory/locations", label: "locations" },
+      { href: "/inventory/other-use", label: "otherUse" },
+    ],
+  },
+  {
     key: "people",
     label: "people",
     basePath: "/people",
     children: [{ href: "/people", label: "employees", exact: true }],
+  },
+  {
+    key: "help",
+    label: "help",
+    basePath: "/help",
+    children: [
+      { href: "/help", label: "helpStart", exact: true },
+      { href: "/help/expenses", label: "helpExpenses" },
+      { href: "/help/inventory", label: "helpInventory" },
+      { href: "/help/people", label: "helpPeople" },
+      { href: "/help/glossary", label: "helpGlossary" },
+    ],
   },
 ];
 

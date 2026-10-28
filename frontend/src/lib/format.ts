@@ -56,6 +56,21 @@ export function formatDateTime(value: string | null | undefined, locale: Locale)
   return format.format(new Date(value));
 }
 
+/**
+ * A calendar day picked in the UI means a day at the facility. Turns `YYYY-MM-DD` into the exact
+ * instant that day starts (or ends) there, for filters the backend applies to timestamps.
+ */
+export function facilityDayBound(date: string, edge: "start" | "end"): string {
+  // the zone's offset that day, read at noon so a midnight DST switch can't shift it
+  const offset =
+    new Intl.DateTimeFormat("en-US", { timeZone: FACILITY_TIME_ZONE, timeZoneName: "longOffset" })
+      .formatToParts(new Date(`${date}T12:00:00Z`))
+      .find((part) => part.type === "timeZoneName")
+      ?.value.replace("GMT", "") || "+00:00";
+  const time = edge === "start" ? "00:00:00.000" : "23:59:59.999";
+  return new Date(`${date}T${time}${offset}`).toISOString();
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
   return value;

@@ -44,7 +44,12 @@
   min-height: 100dvh;
 }
 
+/* stays in view while a long page scrolls, so "Acting as" and the language sit at the bottom of the screen */
 .sidebar {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
   background: var(--surface-1);
   border-right: 1px solid var(--border);
   padding: 24px 16px;
@@ -161,9 +166,15 @@
   font-weight: 550;
 }
 
-/* pinned to the bottom of the sidebar, below however many modules there are */
-.language {
+/* who you act as and the language sit together at the bottom of the sidebar */
+.sidebarFoot {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.language {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -197,6 +208,9 @@
   }
 
   .sidebar {
+    position: static;
+    height: auto;
+    overflow-y: visible;
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
@@ -204,4 +218,22 @@
   .main {
     padding: 20px 16px 48px;
   }
+}
+
+/* ---- module icons ---- */
+
+.groupLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.groupIcon {
+  display: inline-flex;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.groupToggleCurrent .groupIcon {
+  color: var(--series-1);
 }

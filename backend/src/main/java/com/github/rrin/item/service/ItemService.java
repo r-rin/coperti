@@ -22,4 +22,7 @@ public interface ItemService {
 
     /** Case-insensitive name match, capped at 20 results; meant for pickers, not reports. */
     List<Item> search(String text);
+
+    /** The items with these ids that exist; unknown ids are skipped. Lets tables that carry item ids show names. */
+    List<Item> getByIds(List<UUID> ids);
 }

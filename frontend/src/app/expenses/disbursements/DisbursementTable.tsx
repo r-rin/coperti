@@ -28,7 +28,8 @@ import { loadCoverage } from "./coverage";
 import { CoveredExpenses } from "./CoveredExpenses";
 import { downloadAdvanceReport } from "./report/download";
 
-const STATUS_TONE: Record<DisbursementStatus, Tone> = {
+/** Shared with the user guide, so its glossary shows advance states exactly as this table does. */
+export const STATUS_TONE: Record<DisbursementStatus, Tone> = {
   OPEN: "active",
   CLOSED: "neutral",
   CANCELLED: "warning",
