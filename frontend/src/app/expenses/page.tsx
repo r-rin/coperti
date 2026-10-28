@@ -1,8 +1,10 @@
 import { getI18n } from "@/i18n/server";
 import { getEmployeeBalances, getFacilityFloat } from "@/lib/queries";
 
-import styles from "./expenses.module.css";
-import { StatTile, WorkerBalances } from "./viz";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { KpiRow, StatTile } from "@/components/ui/StatTile";
+
+import { WorkerBalances } from "./viz";
 
 // the ledger moves constantly; never serve a cached balance sheet
 export const dynamic = "force-dynamic";
@@ -18,14 +20,9 @@ export default async function OverviewPage() {
 
   return (
     <>
-      <header className={styles.pageHead}>
-        <div>
-          <h1 className={styles.title}>{t.overview.title}</h1>
-          <p className={styles.subtitle}>{t.overview.subtitle}</p>
-        </div>
-      </header>
+      <PageHeader title={t.overview.title} subtitle={t.overview.subtitle} />
 
-      <div className={styles.kpiRow}>
+      <KpiRow>
         <StatTile
           label={t.common.facilityFloat}
           value={money(facilityFloat)}
@@ -49,7 +46,7 @@ export default async function OverviewPage() {
           accent={afterPayingBack < 0 ? "critical" : undefined}
           note={afterPayingBack < 0 ? t.overview.tillShort : t.overview.afterPayingBackNote}
         />
-      </div>
+      </KpiRow>
 
       <WorkerBalances balances={balances} />
     </>

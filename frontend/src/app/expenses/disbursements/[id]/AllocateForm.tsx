@@ -1,13 +1,13 @@
 "use client";
 
 import { App, Alert, Button, InputNumber, Table } from "antd";
-import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 
+import ui from "@/components/ui/ui.module.css";
+import { useServerAction } from "@/components/ui/useServerAction";
 import { useI18n } from "@/i18n/I18nProvider";
 import type { Expense } from "@/lib/types";
 import { allocate } from "../../actions";
-import styles from "../../expenses.module.css";
 
 export interface Candidate extends Expense {
   shortfall: number;
@@ -28,10 +28,9 @@ export function AllocateForm({
   remaining: number;
   candidates: Candidate[];
 }) {
-  const router = useRouter();
   const { message } = App.useApp();
   const { t, money } = useI18n();
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useServerAction();
   const [amounts, setAmounts] = useState<Record<string, number | null>>({});
 
   const selections = useMemo(
@@ -54,20 +53,13 @@ export function AllocateForm({
   }
 
   function submit() {
-    startTransition(async () => {
-      const result = await allocate(disbursementId, selections);
-      if (result.ok) {
-        const closed = result.result?.disbursementStatus === "CLOSED";
-        message.success(
-          closed
-            ? t.allocate.allocatedClosed
-            : t.allocate.allocatedRemaining(money(result.result?.remainingBalance ?? 0)),
-        );
-        setAmounts({});
-        router.refresh();
-      } else {
-        message.error(result.error ?? t.common.somethingWentWrong);
-      }
+    run(() => allocate(disbursementId, selections), undefined, (result) => {
+      message.success(
+        result?.disbursementStatus === "CLOSED"
+          ? t.allocate.allocatedClosed
+          : t.allocate.allocatedRemaining(money(result?.remainingBalance ?? 0)),
+      );
+      setAmounts({});
     });
   }
 
@@ -97,14 +89,14 @@ export function AllocateForm({
             dataIndex: "amount",
             align: "right",
             width: 110,
-            render: (v: number) => <span className={styles.num}>{money(v)}</span>,
+            render: (v: number) => <span className={ui.num}>{money(v)}</span>,
           },
           {
             title: t.allocate.stillNeeds,
             dataIndex: "shortfall",
             align: "right",
             width: 116,
-            render: (v: number) => <span className={styles.num}>{money(v)}</span>,
+            render: (v: number) => <span className={ui.num}>{money(v)}</span>,
           },
           {
             title: t.allocate.cover,
@@ -141,10 +133,10 @@ export function AllocateForm({
         }}
       >
         <div>
-          <div className={styles.tileLabel}>{t.allocate.selected}</div>
-          <div className={`${styles.tileValue} ${over ? styles.tileAccentCritical : ""}`}>
+          <div className={ui.tileLabel}>{t.allocate.selected}</div>
+          <div className={`${ui.tileValue} ${over ? ui.accentCritical : ""}`}>
             {money(total)}
-            <span className={styles.tileNote} style={{ marginLeft: 8 }}>
+            <span className={ui.tileNote} style={{ marginLeft: 8 }}>
               {t.allocate.ofAvailable(money(remaining))}
             </span>
           </div>

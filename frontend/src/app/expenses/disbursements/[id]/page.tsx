@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { getI18n } from "@/i18n/server";
 import { shortId } from "@/lib/format";
 import {
@@ -11,8 +9,9 @@ import {
   getShortfall,
 } from "@/lib/queries";
 
-import styles from "../../expenses.module.css";
-import { StatTile } from "../../viz";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Panel } from "@/components/ui/Panel";
+import { KpiRow, StatTile } from "@/components/ui/StatTile";
 import { AllocateForm, type Candidate } from "./AllocateForm";
 
 export const dynamic = "force-dynamic";
@@ -47,19 +46,13 @@ export default async function AllocatePage(props: PageProps<"/expenses/disbursem
 
   return (
     <>
-      <header className={styles.pageHead}>
-        <div>
-          <Link href="/expenses/disbursements" className={styles.mono}>
-            {t.allocate.back}
-          </Link>
-          <h1 className={styles.title} style={{ marginTop: 6 }}>
-            {t.allocate.title(workerName)}
-          </h1>
-          <p className={styles.subtitle}>{t.allocate.subtitle}</p>
-        </div>
-      </header>
+      <PageHeader
+        title={t.allocate.title(workerName)}
+        subtitle={t.allocate.subtitle}
+        back={{ href: "/expenses/disbursements", label: t.allocate.back }}
+      />
 
-      <div className={styles.kpiRow}>
+      <KpiRow>
         <StatTile
           label={t.allocate.advance}
           value={money(disbursement.amount)}
@@ -82,19 +75,18 @@ export default async function AllocatePage(props: PageProps<"/expenses/disbursem
           value={t.status.disbursement[disbursement.status]}
           note={t.allocate.settlementState}
         />
-      </div>
+      </KpiRow>
 
-      <section className={styles.card}>
-        <h3 className={styles.cardTitle}>{t.allocate.cardTitle}</h3>
-        <p className={styles.cardNote}>
-          {allocatable
-            ? t.allocate.cardNote
-            : t.allocate.notAllocatable(t.status.disbursement[disbursement.status])}
-        </p>
+      <Panel
+        title={t.allocate.cardTitle}
+        note={
+          allocatable ? t.allocate.cardNote : t.allocate.notAllocatable(t.status.disbursement[disbursement.status])
+        }
+      >
         {allocatable ? (
           <AllocateForm disbursementId={id} remaining={remaining} candidates={candidates} />
         ) : null}
-      </section>
+      </Panel>
     </>
   );
 }

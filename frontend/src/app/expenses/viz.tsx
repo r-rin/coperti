@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Panel } from "@/components/ui/Panel";
+import ui from "@/components/ui/ui.module.css";
 import { getI18n } from "@/i18n/server";
 import type { EmployeeBalance } from "@/lib/types";
 import styles from "./expenses.module.css";
@@ -8,31 +10,8 @@ import styles from "./expenses.module.css";
  * Server-rendered presentation only — no client JS. Forms follow the data's job:
  * headline numbers are stat tiles (never a one-bar chart), part-to-whole is a single
  * stacked bar, and per-worker balances are a table with a covered/owed bar per row.
+ * Stat tiles live in components/ui (StatTile), shared with every module.
  */
-
-export function StatTile({
-  label,
-  value,
-  note,
-  hero = false,
-  accent,
-}: {
-  label: string;
-  value: string;
-  note?: string;
-  hero?: boolean;
-  accent?: "good" | "critical";
-}) {
-  const accentClass =
-    accent === "good" ? styles.tileAccentGood : accent === "critical" ? styles.tileAccentCritical : "";
-  return (
-    <div className={styles.card}>
-      <p className={styles.tileLabel}>{label}</p>
-      <div className={`${styles.tileValue} ${hero ? styles.tileHero : ""} ${accentClass}`}>{value}</div>
-      {note ? <p className={styles.tileNote}>{note}</p> : null}
-    </div>
-  );
-}
 
 export interface Segment {
   label: string;
@@ -58,9 +37,7 @@ export async function StackedBar({
   const total = segments.reduce((sum, segment) => sum + segment.value, 0);
 
   return (
-    <section className={styles.card}>
-      <h3 className={styles.cardTitle}>{title}</h3>
-      {note ? <p className={styles.cardNote}>{note}</p> : null}
+    <Panel title={title} note={note}>
       {total > 0 ? (
         <>
           <div
@@ -94,7 +71,7 @@ export async function StackedBar({
       ) : (
         <p className={styles.empty}>{t.common.nothingRecorded}</p>
       )}
-    </section>
+    </Panel>
   );
 }
 
@@ -114,10 +91,7 @@ export async function WorkerBalances({ balances }: { balances: EmployeeBalance[]
   const owed = { label: t.expenses.owed, color: "var(--series-2)" };
 
   return (
-    <section className={styles.card}>
-      <h3 className={styles.cardTitle}>{t.overview.workersTitle}</h3>
-      <p className={styles.cardNote}>{t.overview.workersNote}</p>
-
+    <Panel title={t.overview.workersTitle} note={t.overview.workersNote}>
       {rows.length ? (
         <>
           <div className={styles.legend} style={{ marginTop: 0, marginBottom: 12 }}>
@@ -182,7 +156,7 @@ export async function WorkerBalances({ balances }: { balances: EmployeeBalance[]
                             ))}
                         </div>
                       ) : (
-                        <span className={styles.mono}>{t.overview.nothingSpent}</span>
+                        <span className={ui.mono}>{t.overview.nothingSpent}</span>
                       )}
                     </td>
                   </tr>
@@ -204,6 +178,6 @@ export async function WorkerBalances({ balances }: { balances: EmployeeBalance[]
       ) : (
         <p className={styles.empty}>{t.overview.noEmployees}</p>
       )}
-    </section>
+    </Panel>
   );
 }

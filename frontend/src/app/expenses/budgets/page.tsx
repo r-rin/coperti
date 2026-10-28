@@ -1,8 +1,11 @@
 import { getI18n } from "@/i18n/server";
 import { getBudgetSum, getBudgets, getEmployeeBalances, getFacilityFloat } from "@/lib/queries";
 
+import { PageHeader } from "@/components/ui/PageHeader";
+import { KpiRow, StatTile } from "@/components/ui/StatTile";
+
 import styles from "../expenses.module.css";
-import { StackedBar, StatTile } from "../viz";
+import { StackedBar } from "../viz";
 import { BudgetTable } from "./BudgetTable";
 
 export const dynamic = "force-dynamic";
@@ -30,14 +33,9 @@ export default async function BudgetsPage(props: PageProps<"/expenses/budgets">)
 
   return (
     <>
-      <header className={styles.pageHead}>
-        <div>
-          <h1 className={styles.title}>{t.budgets.title}</h1>
-          <p className={styles.subtitle}>{t.budgets.subtitle}</p>
-        </div>
-      </header>
+      <PageHeader title={t.budgets.title} subtitle={t.budgets.subtitle} />
 
-      <div className={styles.kpiRow}>
+      <KpiRow>
         <StatTile
           label={t.common.facilityFloat}
           value={money(facilityFloat)}
@@ -50,7 +48,7 @@ export default async function BudgetsPage(props: PageProps<"/expenses/budgets">)
           value={money(handedOut)}
           note={t.budgets.handedOutNote}
         />
-      </div>
+      </KpiRow>
 
       <div className={styles.chartGrid}>
         <StackedBar

@@ -1,10 +1,15 @@
 "use client";
 
-import { App, Button, Form, Input, InputNumber, Popconfirm, Select, Space, Table } from "antd";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { Button, Form, Input, InputNumber, Popconfirm, Space, Table } from "antd";
+import { useState } from "react";
 
 import { Modal } from "@/components/Modal";
+import { EntitySelect } from "@/components/pickers/EntitySelect";
+import { FormModal } from "@/components/ui/FormModal";
+import { TableCard } from "@/components/ui/TableCard";
+import ui from "@/components/ui/ui.module.css";
+import { useServerAction } from "@/components/ui/useServerAction";
+import { useUrlParams } from "@/components/ui/useUrlParams";
 import { useI18n } from "@/i18n/I18nProvider";
 import { shortId } from "@/lib/format";
 import type { Employee, Expense, PaginatedResponse } from "@/lib/types";
@@ -31,14 +36,11 @@ export function ExpenseTable({
   /** unspent cash each worker holds on open advances */
   heldByEmployee: Record<string, number>;
 }) {
-  const router = useRouter();
-  const params = useSearchParams();
-  const { message } = App.useApp();
+  const { goToPage } = useUrlParams();
+  const { pending, run } = useServerAction();
   const { t, money } = useI18n();
-  const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState<Expense | null>(null);
   const [open, setOpen] = useState(false);
-  const [form] = Form.useForm<FormValues>();
   // kept across pages, so a worker's receipts can be gathered from several pages into one payment
   const [selected, setSelected] = useState<Record<string, PayLine>>({});
   const [paying, setPaying] = useState(false);
@@ -69,25 +71,6 @@ export function ExpenseTable({
     });
   }
 
-  function goToPage(next: number) {
-    const search = new URLSearchParams(params.toString());
-    search.set("page", String(next - 1));
-    router.push(`/expenses/list?${search.toString()}`);
-  }
-
-  /** Every action is a Server Action; the router refresh re-runs the server render. */
-  function act(work: () => Promise<{ ok: boolean; error?: string }>, success: string) {
-    startTransition(async () => {
-      const result = await work();
-      if (result.ok) {
-        message.success(success);
-        router.refresh();
-      } else {
-        message.error(result.error ?? t.common.somethingWentWrong);
-      }
-    });
-  }
-
   function openCreate() {
     setEditing(null);
     setOpen(true);
@@ -102,26 +85,16 @@ export function ExpenseTable({
     const work = editing
       ? () => updateExpense({ ...values, id: editing.id })
       : () => createExpense(values);
-    startTransition(async () => {
-      const result = await work();
-      if (result.ok) {
-        message.success(editing ? t.expenses.updated : t.expenses.recorded);
-        setOpen(false);
-        router.refresh();
-      } else {
-        message.error(result.error ?? t.common.somethingWentWrong);
-      }
-    });
+    run(work, editing ? t.expenses.updated : t.expenses.recorded, () => setOpen(false));
   }
 
   return (
     <>
-      <div className={styles.tableCard}>
-        <div className={styles.tableHead}>
-          <h2 className={styles.tableTitle}>
-            {t.expenses.tableTitle} <span className={styles.mono}>({page.totalItems})</span>
-          </h2>
-          {lines.length ? (
+      <TableCard
+        title={t.expenses.tableTitle}
+        count={page.totalItems}
+        extra={
+          lines.length ? (
             <div className={styles.selectionBar}>
               <span className={styles.selectionHint}>{t.expenses.oneWorkerHint(selectedWorkerName)}</span>
               <Button onClick={() => setSelected({})}>{t.expenses.clearSelection}</Button>
@@ -131,13 +104,14 @@ export function ExpenseTable({
             </div>
           ) : (
             <Space>
-              <AddEmployee onDone={() => router.refresh()} />
+              <AddEmployee />
               <Button type="primary" onClick={openCreate} disabled={!employees.length}>
                 {t.expenses.record}
               </Button>
             </Space>
-          )}
-        </div>
+          )
+        }
+      >
         <Table<Expense>
           rowKey="id"
           dataSource={page.data}
@@ -173,7 +147,7 @@ export function ExpenseTable({
               dataIndex: "amount",
               align: "right",
               width: 116,
-              render: (v: number) => <span className={styles.num}>{money(v)}</span>,
+              render: (v: number) => <span className={ui.num}>{money(v)}</span>,
             },
             {
               title: t.expenses.covered,
@@ -181,7 +155,7 @@ export function ExpenseTable({
               align: "right",
               width: 116,
               render: (_, row) => (
-                <span className={styles.num}>{money(coverage[row.id]?.covered ?? 0)}</span>
+                <span className={ui.num}>{money(coverage[row.id]?.covered ?? 0)}</span>
               ),
             },
             {
@@ -192,7 +166,7 @@ export function ExpenseTable({
               render: (_, row) => {
                 const owed = owedOf(row);
                 return (
-                  <span className={`${styles.num} ${owed > 0 ? styles.owedText : ""}`}>{money(owed)}</span>
+                  <span className={`${ui.num} ${owed > 0 ? styles.owedText : ""}`}>{money(owed)}</span>
                 );
               },
             },
@@ -207,7 +181,7 @@ export function ExpenseTable({
                   </Button>
                   <Popconfirm
                     title={t.expenses.deleteConfirm}
-                    onConfirm={() => act(() => deleteExpense(row.id), t.expenses.deleted)}
+                    onConfirm={() => run(() => deleteExpense(row.id), t.expenses.deleted)}
                   >
                     <Button size="small" danger>
                       {t.common.delete}
@@ -218,7 +192,7 @@ export function ExpenseTable({
             },
           ]}
         />
-      </div>
+      </TableCard>
 
       <PayDialog
         open={paying}
@@ -229,86 +203,66 @@ export function ExpenseTable({
         onPaid={() => {
           setPaying(false);
           setSelected({});
-          router.refresh();
         }}
       />
 
-      <Modal
+      <FormModal<FormValues>
         title={editing ? t.expenses.editTitle : t.expenses.record}
         open={open}
-        onCancel={() => setOpen(false)}
-        onOk={() => form.submit()}
-        confirmLoading={pending}
-        destroyOnHidden
+        onClose={() => setOpen(false)}
+        onSubmit={submit}
+        pending={pending}
+        initialValues={
+          editing
+            ? {
+                employeeId: editing.employeeId ?? undefined,
+                amount: editing.amount,
+                date: editing.date ?? "",
+                description: editing.description ?? "",
+              }
+            : undefined
+        }
       >
-        {/* the modal destroys the form on close and preserve={false} drops its values, so each
-            open mounts fresh from initialValues — the instance is never touched while unmounted */}
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={submit}
-          preserve={false}
-          initialValues={
-            editing
-              ? {
-                  employeeId: editing.employeeId ?? undefined,
-                  amount: editing.amount,
-                  date: editing.date ?? "",
-                  description: editing.description ?? "",
-                }
-              : undefined
-          }
-          style={{ marginTop: 16 }}
+        <Form.Item
+          name="employeeId"
+          label={t.common.worker}
+          rules={[{ required: true, message: t.expenses.pickWorker }]}
         >
-          <Form.Item
-            name="employeeId"
-            label={t.common.worker}
-            rules={[{ required: true, message: t.expenses.pickWorker }]}
-          >
-            <Select
-              disabled={!!editing}
-              options={employees.map((e) => ({ value: e.id, label: e.name }))}
-              placeholder={t.expenses.whoPaid}
-            />
-          </Form.Item>
-          <Form.Item
-            name="amount"
-            label={t.common.amount}
-            rules={[{ required: true, message: t.common.amountRequired }]}
-          >
-            <InputNumber min={0.01} step={0.01} style={{ width: "100%" }} placeholder="0.00" />
-          </Form.Item>
-          <Form.Item name="date" label={t.common.date} rules={[{ required: true, message: t.common.dateRequired }]}>
-            <Input type="date" />
-          </Form.Item>
-          <Form.Item name="description" label={t.common.description}>
-            <Input.TextArea rows={2} placeholder={t.expenses.whatBought} />
-          </Form.Item>
-        </Form>
-      </Modal>
+          <EntitySelect
+            disabled={!!editing}
+            options={employees.map((e) => ({ id: e.id, label: e.name }))}
+            placeholder={t.expenses.whoPaid}
+          />
+        </Form.Item>
+        <Form.Item
+          name="amount"
+          label={t.common.amount}
+          rules={[{ required: true, message: t.common.amountRequired }]}
+        >
+          <InputNumber min={0.01} step={0.01} style={{ width: "100%" }} placeholder="0.00" />
+        </Form.Item>
+        <Form.Item name="date" label={t.common.date} rules={[{ required: true, message: t.common.dateRequired }]}>
+          <Input type="date" />
+        </Form.Item>
+        <Form.Item name="description" label={t.common.description}>
+          <Input.TextArea rows={2} placeholder={t.expenses.whatBought} />
+        </Form.Item>
+      </FormModal>
     </>
   );
 }
 
 /** Employees have no screen of their own yet; the picker would otherwise be empty forever. */
-function AddEmployee({ onDone }: { onDone: () => void }) {
-  const { message } = App.useApp();
+function AddEmployee() {
   const { t } = useI18n();
+  const { pending, run } = useServerAction();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [pending, startTransition] = useTransition();
 
   function submit() {
-    startTransition(async () => {
-      const result = await createEmployee(name);
-      if (result.ok) {
-        message.success(t.expenses.workerAdded);
-        setName("");
-        setOpen(false);
-        onDone();
-      } else {
-        message.error(result.error ?? t.common.somethingWentWrong);
-      }
+    run(() => createEmployee(name), t.expenses.workerAdded, () => {
+      setName("");
+      setOpen(false);
     });
   }
 

@@ -8,8 +8,8 @@ import {
 } from "@/lib/queries";
 import type { DisbursementStatus } from "@/lib/types";
 
-import styles from "../expenses.module.css";
-import { StatTile } from "../viz";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { KpiRow, StatTile } from "@/components/ui/StatTile";
 import { DisbursementTable } from "./DisbursementTable";
 
 export const dynamic = "force-dynamic";
@@ -46,17 +46,12 @@ export default async function DisbursementsPage(props: PageProps<"/expenses/disb
 
   return (
     <>
-      <header className={styles.pageHead}>
-        <div>
-          <h1 className={styles.title}>{t.advances.title}</h1>
-          <p className={styles.subtitle}>{t.advances.subtitle}</p>
-        </div>
-      </header>
+      <PageHeader title={t.advances.title} subtitle={t.advances.subtitle} />
 
-      <div className={styles.kpiRow}>
+      <KpiRow>
         <StatTile label={t.advances.unspent} value={money(unspent)} note={t.advances.unspentNote} />
         <StatTile label={t.common.filteredTotal} value={money(filteredSum)} note={t.common.sumOfMatching} />
-      </div>
+      </KpiRow>
 
       <DisbursementTable page={page} employees={employees} balances={balances} />
     </>

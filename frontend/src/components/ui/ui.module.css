@@ -23,11 +23,82 @@
   max-width: 62ch;
 }
 
+.back {
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
 .actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
+
+/* ---- panels and stat tiles ---- */
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+
+.cardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 2px;
+}
+
+.cardNote {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+}
+
+/* headline numbers are stat tiles, never a bar chart of four numbers */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tileLabel {
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--text-secondary);
+  margin: 0 0 6px;
+}
+
+.tileValue {
+  font-size: 26px;
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.tileHero {
+  font-size: 44px;
+  letter-spacing: -0.03em;
+}
+
+.tileNote {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 6px 0 0;
+}
+
+.accentGood {
+  color: var(--good);
+}
+
+.accentCritical {
+  color: var(--critical);
+}
+
+/* ---- filters ---- */
 
 .filters {
   display: flex;

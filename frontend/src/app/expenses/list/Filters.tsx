@@ -1,20 +1,21 @@
 "use client";
 
-import { Button, Checkbox, Input, Select } from "antd";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Button, Checkbox, Input } from "antd";
 import { useState } from "react";
 
+import { EntitySelect } from "@/components/pickers/EntitySelect";
+import { FilterBar, FilterField } from "@/components/ui/FilterBar";
+import { useUrlParams } from "@/components/ui/useUrlParams";
 import { useI18n } from "@/i18n/I18nProvider";
 import type { Employee } from "@/lib/types";
-import styles from "../expenses.module.css";
 
 /**
  * Filters live in the URL, so applying one is a server round-trip that re-renders the
  * page with fresh rows. No client-side fetching, and every filtered view is linkable.
+ * They apply on the button (not per keystroke), so the inputs keep local state until then.
  */
 export function Filters({ employees }: { employees: Employee[] }) {
-  const router = useRouter();
-  const params = useSearchParams();
+  const { params, setFilters, reset: resetUrl } = useUrlParams();
   const { t } = useI18n();
 
   const [fromDate, setFromDate] = useState(params.get("fromDate") ?? "");
@@ -24,13 +25,13 @@ export function Filters({ employees }: { employees: Employee[] }) {
   const [uncoveredOnly, setUncoveredOnly] = useState(params.get("uncoveredOnly") === "true");
 
   function apply() {
-    const next = new URLSearchParams();
-    if (fromDate) next.set("fromDate", fromDate);
-    if (toDate) next.set("toDate", toDate);
-    if (search) next.set("search", search);
-    if (employee) next.set("issuedByEmployee", employee);
-    if (uncoveredOnly) next.set("uncoveredOnly", "true");
-    router.push(`/expenses/list?${next.toString()}`);
+    setFilters({
+      fromDate,
+      toDate,
+      search,
+      issuedByEmployee: employee,
+      uncoveredOnly: uncoveredOnly ? "true" : undefined,
+    });
   }
 
   function reset() {
@@ -39,42 +40,28 @@ export function Filters({ employees }: { employees: Employee[] }) {
     setSearch("");
     setEmployee("");
     setUncoveredOnly(false);
-    router.push("/expenses/list");
+    resetUrl();
   }
 
   return (
-    <div className={styles.filters}>
-      <label className={styles.filterField}>
-        <span className={styles.filterLabel}>{t.common.from}</span>
-        <Input
-          type="date"
-          value={fromDate}
-          onChange={(e) => setFromDate(e.target.value)}
-          style={{ width: 160 }}
-        />
-      </label>
-      <label className={styles.filterField}>
-        <span className={styles.filterLabel}>{t.expenses.filterTo}</span>
-        <Input
-          type="date"
-          value={toDate}
-          onChange={(e) => setToDate(e.target.value)}
-          style={{ width: 160 }}
-        />
-      </label>
-      <label className={styles.filterField}>
-        <span className={styles.filterLabel}>{t.common.worker}</span>
-        <Select
+    <FilterBar>
+      <FilterField label={t.common.from}>
+        <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} style={{ width: 160 }} />
+      </FilterField>
+      <FilterField label={t.expenses.filterTo}>
+        <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} style={{ width: 160 }} />
+      </FilterField>
+      <FilterField label={t.common.worker}>
+        <EntitySelect
           allowClear
           placeholder={t.common.anyone}
           value={employee || undefined}
           onChange={(value) => setEmployee(value ?? "")}
-          options={employees.map((e) => ({ value: e.id, label: e.name }))}
+          options={employees.map((e) => ({ id: e.id, label: e.name }))}
           style={{ width: 180 }}
         />
-      </label>
-      <label className={styles.filterField}>
-        <span className={styles.filterLabel}>{t.common.description}</span>
+      </FilterField>
+      <FilterField label={t.common.description}>
         <Input
           placeholder={t.expenses.containsPlaceholder}
           value={search}
@@ -82,7 +69,7 @@ export function Filters({ employees }: { employees: Employee[] }) {
           onPressEnter={apply}
           style={{ width: 200 }}
         />
-      </label>
+      </FilterField>
       <Checkbox
         checked={uncoveredOnly}
         onChange={(e) => setUncoveredOnly(e.target.checked)}
@@ -94,6 +81,6 @@ export function Filters({ employees }: { employees: Employee[] }) {
         {t.expenses.apply}
       </Button>
       <Button onClick={reset}>{t.expenses.reset}</Button>
-    </div>
+    </FilterBar>
   );
 }

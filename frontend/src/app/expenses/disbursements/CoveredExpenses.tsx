@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { useI18n } from "@/i18n/I18nProvider";
 import type { AdvanceCoverage, CoveredExpense } from "@/lib/types";
+import ui from "@/components/ui/ui.module.css";
 import styles from "../expenses.module.css";
 import { loadCoverage } from "./coverage";
 
@@ -46,21 +47,21 @@ export function CoveredExpenses({ disbursementId }: { disbursementId: string }) 
             dataIndex: "amount",
             align: "right",
             width: 130,
-            render: (v: number) => <span className={styles.num}>{money(v)}</span>,
+            render: (v: number) => <span className={ui.num}>{money(v)}</span>,
           },
           {
             title: t.advances.coveredHere,
             dataIndex: "coveredHere",
             align: "right",
             width: 170,
-            render: (v: number) => <span className={styles.num}>{money(v)}</span>,
+            render: (v: number) => <span className={ui.num}>{money(v)}</span>,
           },
           {
             title: t.advances.stillOwed,
             dataIndex: "shortfall",
             align: "right",
             width: 116,
-            render: (v: number) => <span className={styles.num}>{money(v)}</span>,
+            render: (v: number) => <span className={ui.num}>{money(v)}</span>,
           },
         ]}
       />

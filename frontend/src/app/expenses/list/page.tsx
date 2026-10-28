@@ -8,8 +8,8 @@ import {
   getShortfall,
 } from "@/lib/queries";
 
-import styles from "../expenses.module.css";
-import { StatTile } from "../viz";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { KpiRow, StatTile } from "@/components/ui/StatTile";
 import { ExpenseTable } from "./ExpenseTable";
 import { Filters } from "./Filters";
 
@@ -60,14 +60,9 @@ export default async function ExpenseListPage(props: PageProps<"/expenses/list">
 
   return (
     <>
-      <header className={styles.pageHead}>
-        <div>
-          <h1 className={styles.title}>{t.expenses.title}</h1>
-          <p className={styles.subtitle}>{t.expenses.subtitle}</p>
-        </div>
-      </header>
+      <PageHeader title={t.expenses.title} subtitle={t.expenses.subtitle} />
 
-      <div className={styles.kpiRow}>
+      <KpiRow>
         <StatTile
           label={t.expenses.matching}
           value={String(page.totalItems)}
@@ -80,7 +75,7 @@ export default async function ExpenseListPage(props: PageProps<"/expenses/list">
           accent={owedOnPage > 0 ? "critical" : undefined}
           note={t.expenses.owedOnPageNote}
         />
-      </div>
+      </KpiRow>
 
       <Filters employees={employees} />
       <ExpenseTable

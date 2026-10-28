@@ -1,12 +1,18 @@
 "use client";
 
 import { DownOutlined, FilePdfOutlined, MoreOutlined, RightOutlined } from "@ant-design/icons";
-import { App, Button, Dropdown, Form, Input, InputNumber, Select, Space, Table, Tag } from "antd";
+import { App, Button, Dropdown, Form, Input, InputNumber, Select, Space, Table } from "antd";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
-import { Modal } from "@/components/Modal";
+import { EntitySelect } from "@/components/pickers/EntitySelect";
+import { FilterBar, FilterField } from "@/components/ui/FilterBar";
+import { FormModal } from "@/components/ui/FormModal";
+import { StatusTag, type Tone } from "@/components/ui/StatusTag";
+import { TableCard } from "@/components/ui/TableCard";
+import ui from "@/components/ui/ui.module.css";
+import { useServerAction } from "@/components/ui/useServerAction";
+import { useUrlParams } from "@/components/ui/useUrlParams";
 import { useI18n } from "@/i18n/I18nProvider";
 import { shortId } from "@/lib/format";
 import {
@@ -22,9 +28,9 @@ import { loadCoverage } from "./coverage";
 import { CoveredExpenses } from "./CoveredExpenses";
 import { downloadAdvanceReport } from "./report/download";
 
-const STATUS_COLOR: Record<DisbursementStatus, string> = {
-  OPEN: "blue",
-  CLOSED: "default",
+const STATUS_TONE: Record<DisbursementStatus, Tone> = {
+  OPEN: "active",
+  CLOSED: "neutral",
   CANCELLED: "warning",
 };
 
@@ -37,38 +43,16 @@ export function DisbursementTable({
   employees: Employee[];
   balances: Record<string, number>;
 }) {
-  const router = useRouter();
-  const params = useSearchParams();
+  const { params, setFilters, goToPage } = useUrlParams();
+  const { pending, run } = useServerAction();
   const { message, modal } = App.useApp();
   const { t, money, locale } = useI18n();
-  const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   // kept across pages, so one report can gather advances from several pages and workers
   const [selected, setSelected] = useState<string[]>([]);
   const [reporting, setReporting] = useState(false);
-  const [form] = Form.useForm<{ employeeId: string; amount: number; date: string }>();
 
   const names = new Map(employees.map((e) => [e.id, e.name]));
-
-  function setParam(key: string, value: string | undefined) {
-    const next = new URLSearchParams(params.toString());
-    if (value) next.set(key, value);
-    else next.delete(key);
-    next.delete("page");
-    router.push(`/expenses/disbursements?${next.toString()}`);
-  }
-
-  function act(work: () => Promise<{ ok: boolean; error?: string }>, success: string) {
-    startTransition(async () => {
-      const result = await work();
-      if (result.ok) {
-        message.success(success);
-        router.refresh();
-      } else {
-        message.error(result.error ?? t.common.somethingWentWrong);
-      }
-    });
-  }
 
   function confirmStatus(row: Disbursement, status: "CLOSED" | "CANCELLED") {
     const closing = status === "CLOSED";
@@ -77,7 +61,7 @@ export function DisbursementTable({
       content: closing ? t.advances.closeConfirmNote : t.advances.cancelConfirmNote,
       okButtonProps: { danger: !closing },
       onOk: () =>
-        act(() => updateDisbursementStatus(row.id, status), closing ? t.advances.closed : t.advances.cancelled),
+        run(() => updateDisbursementStatus(row.id, status), closing ? t.advances.closed : t.advances.cancelled),
     });
   }
 
@@ -98,54 +82,42 @@ export function DisbursementTable({
   }
 
   function submit(values: { employeeId: string; amount: number; date: string }) {
-    startTransition(async () => {
-      const result = await createDisbursement(values);
-      if (result.ok) {
-        message.success(t.advances.handedOut);
-        setOpen(false);
-        router.refresh();
-      } else {
-        message.error(result.error ?? t.common.somethingWentWrong);
-      }
-    });
+    run(() => createDisbursement(values), t.advances.handedOut, () => setOpen(false));
   }
 
   return (
     <>
-      <div className={styles.filters}>
-        <label className={styles.filterField}>
-          <span className={styles.filterLabel}>{t.common.worker}</span>
-          <Select
+      <FilterBar>
+        <FilterField label={t.common.worker}>
+          <EntitySelect
             allowClear
             placeholder={t.common.anyone}
             value={params.get("givenToEmployee") ?? undefined}
-            onChange={(value) => setParam("givenToEmployee", value ?? undefined)}
-            options={employees.map((e) => ({ value: e.id, label: e.name }))}
+            onChange={(value) => setFilters({ givenToEmployee: value })}
+            options={employees.map((e) => ({ id: e.id, label: e.name }))}
             style={{ width: 180 }}
           />
-        </label>
-        <label className={styles.filterField}>
-          <span className={styles.filterLabel}>{t.common.state}</span>
+        </FilterField>
+        <FilterField label={t.common.state}>
           <Select
             allowClear
             placeholder={t.common.anyState}
             value={params.get("statuses") ?? undefined}
-            onChange={(value) => setParam("statuses", value ?? undefined)}
+            onChange={(value) => setFilters({ statuses: value })}
             options={DISBURSEMENT_STATUSES.map((s) => ({ value: s, label: t.status.disbursement[s] }))}
             style={{ width: 160 }}
           />
-        </label>
+        </FilterField>
         <Button type="primary" onClick={() => setOpen(true)} disabled={!employees.length}>
           {t.advances.handOut}
         </Button>
-      </div>
+      </FilterBar>
 
-      <div className={styles.tableCard}>
-        <div className={styles.tableHead}>
-          <h2 className={styles.tableTitle}>
-            {t.advances.tableTitle} <span className={styles.mono}>({page.totalItems})</span>
-          </h2>
-          {selected.length ? (
+      <TableCard
+        title={t.advances.tableTitle}
+        count={page.totalItems}
+        extra={
+          selected.length ? (
             <div className={styles.selectionBar}>
               <span className={styles.selectionHint}>{t.advances.selectionHint}</span>
               <Button onClick={() => setSelected([])}>{t.advances.clearSelection}</Button>
@@ -153,8 +125,9 @@ export function DisbursementTable({
                 {t.advances.reportSelected(selected.length)}
               </Button>
             </div>
-          ) : null}
-        </div>
+          ) : null
+        }
+      >
         <Table<Disbursement>
           rowKey="id"
           dataSource={page.data}
@@ -183,7 +156,7 @@ export function DisbursementTable({
             pageSize: page.pageSize,
             total: page.totalItems,
             showSizeChanger: false,
-            onChange: (next) => setParam("page", String(next - 1)),
+            onChange: goToPage,
           }}
           columns={[
             { title: t.common.date, dataIndex: "date", width: 116, render: (v: string | null) => v ?? "—" },
@@ -196,14 +169,16 @@ export function DisbursementTable({
               title: t.common.state,
               dataIndex: "status",
               width: 118,
-              render: (status: DisbursementStatus) => <Tag color={STATUS_COLOR[status]}>{t.status.disbursement[status]}</Tag>,
+              render: (status: DisbursementStatus) => (
+                <StatusTag label={t.status.disbursement[status]} tone={STATUS_TONE[status]} />
+              ),
             },
             {
               title: t.common.amount,
               dataIndex: "amount",
               align: "right",
               width: 116,
-              render: (v: number) => <span className={styles.num}>{money(v)}</span>,
+              render: (v: number) => <span className={ui.num}>{money(v)}</span>,
             },
             {
               title: t.common.remaining,
@@ -211,7 +186,7 @@ export function DisbursementTable({
               align: "right",
               width: 116,
               render: (_, row) => (
-                <span className={styles.num}>{money(balances[row.id] ?? 0)}</span>
+                <span className={ui.num}>{money(balances[row.id] ?? 0)}</span>
               ),
             },
             {
@@ -248,32 +223,29 @@ export function DisbursementTable({
             },
           ]}
         />
-      </div>
+      </TableCard>
 
-      <Modal
+      <FormModal<{ employeeId: string; amount: number; date: string }>
         title={t.advances.handOut}
         open={open}
-        onCancel={() => setOpen(false)}
-        onOk={() => form.submit()}
-        confirmLoading={pending}
-        destroyOnHidden
+        onClose={() => setOpen(false)}
+        onSubmit={submit}
+        pending={pending}
       >
-        <Form form={form} layout="vertical" onFinish={submit} preserve={false} style={{ marginTop: 16 }}>
-          <Form.Item
-            name="employeeId"
-            label={t.common.worker}
-            rules={[{ required: true, message: t.advances.pickRecipient }]}
-          >
-            <Select options={employees.map((e) => ({ value: e.id, label: e.name }))} />
-          </Form.Item>
-          <Form.Item name="amount" label={t.common.amount} rules={[{ required: true, message: t.common.amountRequired }]}>
-            <InputNumber min={0.01} step={0.01} style={{ width: "100%" }} placeholder="0.00" />
-          </Form.Item>
-          <Form.Item name="date" label={t.common.date} rules={[{ required: true, message: t.common.dateRequired }]}>
-            <Input type="date" />
-          </Form.Item>
-        </Form>
-      </Modal>
+        <Form.Item
+          name="employeeId"
+          label={t.common.worker}
+          rules={[{ required: true, message: t.advances.pickRecipient }]}
+        >
+          <EntitySelect options={employees.map((e) => ({ id: e.id, label: e.name }))} />
+        </Form.Item>
+        <Form.Item name="amount" label={t.common.amount} rules={[{ required: true, message: t.common.amountRequired }]}>
+          <InputNumber min={0.01} step={0.01} style={{ width: "100%" }} placeholder="0.00" />
+        </Form.Item>
+        <Form.Item name="date" label={t.common.date} rules={[{ required: true, message: t.common.dateRequired }]}>
+          <Input type="date" />
+        </Form.Item>
+      </FormModal>
     </>
   );
 }

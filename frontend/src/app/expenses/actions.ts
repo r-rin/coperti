@@ -1,9 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import { type ActionResult, runAction } from "@/lib/actions";
-import { ApiError, api } from "@/lib/api";
+import { api } from "@/lib/api";
 import type {
   AllocationResponse,
   AllocationSelection,
@@ -79,16 +77,12 @@ export async function updateDisbursementStatus(
 export async function allocate(
   disbursementId: string,
   selections: AllocationSelection[],
-): Promise<ActionResult & { result?: AllocationResponse }> {
-  try {
-    const result = await api.post<AllocationResponse>("/allocation", { disbursementId, selections });
-    ALL.forEach((path) => revalidatePath(path));
-    revalidatePath(`/expenses/disbursements/${disbursementId}`);
-    return { ok: true, result };
-  } catch (error) {
-    if (error instanceof ApiError) return { ok: false, error: error.message };
-    throw error;
-  }
+): Promise<ActionResult<AllocationResponse>> {
+  return runAction(
+    () => api.post<AllocationResponse>("/allocation", { disbursementId, selections }),
+    ...ALL,
+    `/expenses/disbursements/${disbursementId}`,
+  );
 }
 
 // ---------------------------------------------------------------- settlement
@@ -101,17 +95,8 @@ export interface SettlementInput {
   expenseIds: string[];
 }
 
-export async function settle(
-  input: SettlementInput,
-): Promise<ActionResult & { result?: SettlementResponse }> {
-  try {
-    const result = await api.post<SettlementResponse>("/settlement", input);
-    ALL.forEach((path) => revalidatePath(path));
-    return { ok: true, result };
-  } catch (error) {
-    if (error instanceof ApiError) return { ok: false, error: error.message };
-    throw error;
-  }
+export async function settle(input: SettlementInput): Promise<ActionResult<SettlementResponse>> {
+  return runAction(() => api.post<SettlementResponse>("/settlement", input), ...ALL);
 }
 
 // ---------------------------------------------------------------- budgets

@@ -1,9 +1,12 @@
 "use client";
 
 import { App, Button, Input, InputNumber, Space, Table } from "antd";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 import { Modal } from "@/components/Modal";
+import { FilterField } from "@/components/ui/FilterBar";
+import ui from "@/components/ui/ui.module.css";
+import { useServerAction } from "@/components/ui/useServerAction";
 import { useI18n } from "@/i18n/I18nProvider";
 import { settle } from "../actions";
 import styles from "../expenses.module.css";
@@ -100,7 +103,7 @@ function PayBody({
 }) {
   const { t, money } = useI18n();
   const { message } = App.useApp();
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useServerAction();
 
   const owedTotal = lines.reduce((sum, line) => sum + cents(line.owed), 0) / 100;
   // suggest exactly what closes the debt once the held advance is spent
@@ -112,21 +115,15 @@ function PayBody({
   const paysSomething = plan.fromAdvances + plan.fromNewCash > 0;
 
   function submit() {
-    startTransition(async () => {
-      const outcome = await settle({
-        employeeId: lines[0].employeeId,
-        amount: cash ?? 0,
-        date,
-        expenseIds: lines.map((line) => line.id),
-      });
-      if (!outcome.ok || !outcome.result) {
-        message.error(outcome.error ?? t.common.somethingWentWrong);
-        return;
+    const input = { employeeId: lines[0].employeeId, amount: cash ?? 0, date, expenseIds: lines.map((line) => line.id) };
+    // the success message depends on what the backend actually settled, so it is built from the reply
+    run(() => settle(input), undefined, (result) => {
+      if (result) {
+        const { stillOwed, leftOnNewAdvance } = result;
+        const parts = [stillOwed > 0 ? t.expenses.paidPartly(money(stillOwed)) : t.expenses.paidFull];
+        if (leftOnNewAdvance > 0) parts.push(t.expenses.leftAsAdvance(money(leftOnNewAdvance)));
+        message.success(parts.join(". "));
       }
-      const { stillOwed, leftOnNewAdvance } = outcome.result;
-      const parts = [stillOwed > 0 ? t.expenses.paidPartly(money(stillOwed)) : t.expenses.paidFull];
-      if (leftOnNewAdvance > 0) parts.push(t.expenses.leftAsAdvance(money(leftOnNewAdvance)));
-      message.success(parts.join(". "));
       onPaid();
     });
   }
@@ -135,20 +132,19 @@ function PayBody({
     <div className={styles.pay}>
       <div className={styles.payFigures}>
         <div>
-          <p className={styles.tileLabel}>{t.expenses.owedOnSelection}</p>
+          <p className={ui.tileLabel}>{t.expenses.owedOnSelection}</p>
           <div className={styles.payValue}>{money(owedTotal)}</div>
-          <p className={styles.tileNote}>{t.expenses.receipts(lines.length)}</p>
+          <p className={ui.tileNote}>{t.expenses.receipts(lines.length)}</p>
         </div>
         <div>
-          <p className={styles.tileLabel}>{t.expenses.heldAdvance}</p>
+          <p className={ui.tileLabel}>{t.expenses.heldAdvance}</p>
           <div className={styles.payValue}>{money(held)}</div>
-          <p className={styles.tileNote}>{t.expenses.heldAdvanceNote}</p>
+          <p className={ui.tileNote}>{t.expenses.heldAdvanceNote}</p>
         </div>
       </div>
 
       <div className={styles.payFields}>
-        <label className={styles.filterField}>
-          <span className={styles.filterLabel}>{t.expenses.newCash}</span>
+        <FilterField label={t.expenses.newCash}>
           <InputNumber
             min={0}
             step={0.01}
@@ -158,11 +154,10 @@ function PayBody({
             style={{ width: 180 }}
             autoFocus
           />
-        </label>
-        <label className={styles.filterField}>
-          <span className={styles.filterLabel}>{t.common.date}</span>
+        </FilterField>
+        <FilterField label={t.common.date}>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: 160 }} />
-        </label>
+        </FilterField>
       </div>
 
       <Table
@@ -178,7 +173,7 @@ function PayBody({
             dataIndex: "owed",
             align: "right",
             width: 110,
-            render: (v: number) => <span className={styles.num}>{money(v)}</span>,
+            render: (v: number) => <span className={ui.num}>{money(v)}</span>,
           },
           {
             title: t.expenses.owedAfter,
@@ -186,7 +181,7 @@ function PayBody({
             align: "right",
             width: 110,
             render: (v: number) => (
-              <span className={`${styles.num} ${v > 0 ? styles.owedText : ""}`}>{money(v)}</span>
+              <span className={`${ui.num} ${v > 0 ? styles.owedText : ""}`}>{money(v)}</span>
             ),
           },
         ]}
