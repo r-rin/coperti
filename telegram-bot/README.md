@@ -15,15 +15,18 @@ is enforced by the backend; the bot only shows its answers.
 
 The backend decides. Each employee can be linked to one Telegram account; the bot forwards the Telegram user id
 (which Telegram itself authenticated) and the backend maps it to the employee, who is then recorded as
-"performed by". Unlinked users are refused and told how to get linked. Two ways to link:
+"performed by". Unlinked users are refused and told how to get linked.
 
-- **One-time code** (recommended): `POST /api/telegram-account/employee/{employeeId}/link-code` returns an
-  8-character code valid for 15 minutes. The employee sends `/start CODE` to the bot. Issuing a new code cancels
-  the previous unused one.
-- **Directly by id**: `PUT /api/telegram-account` with `{"employeeId": ..., "telegramUserId": ...}`. An unlinked
-  user who writes to the bot is shown their Telegram id for this.
+Linking is done on the web app's **People** page (Telegram menu on each employee), two ways:
 
-`DELETE /api/telegram-account/employee/{employeeId}` unlinks.
+- **One-time code** (recommended): "Issue link code" shows an 8-character code valid for 15 minutes; the employee
+  sends `/start CODE` to the bot. Issuing a new code cancels the previous unused one. If the frontend has
+  `TELEGRAM_BOT_USERNAME` set (e.g. `coperti_bot`), the dialog also shows a `t.me` link that does this in one tap.
+- **Directly by id**: "Link by Telegram id". An unlinked user who writes to the bot is shown their Telegram id.
+
+The same is available on the API: `POST /api/telegram-account/employee/{employeeId}/link-code`,
+`PUT /api/telegram-account` with `{"employeeId": ..., "telegramUserId": ...}`, `GET /api/telegram-account` (all links),
+`DELETE /api/telegram-account/employee/{employeeId}` (unlink).
 
 The bot authenticates itself to the backend with a shared secret sent as `X-Bot-Token` on every request; the
 backend only serves `/api/bot/**` when it matches. Without a configured secret the backend refuses all bot calls.

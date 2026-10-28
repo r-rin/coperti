@@ -1,9 +1,9 @@
 "use client";
 
 import { Button, Form, Input, InputNumber, Popconfirm, Space, Table } from "antd";
+import Link from "next/link";
 import { useState } from "react";
 
-import { Modal } from "@/components/Modal";
 import { EntitySelect } from "@/components/pickers/EntitySelect";
 import { FormModal } from "@/components/ui/FormModal";
 import { TableCard } from "@/components/ui/TableCard";
@@ -13,7 +13,7 @@ import { useUrlParams } from "@/components/ui/useUrlParams";
 import { useI18n } from "@/i18n/I18nProvider";
 import { shortId } from "@/lib/format";
 import type { Employee, Expense, PaginatedResponse } from "@/lib/types";
-import { createEmployee, createExpense, deleteExpense, updateExpense } from "../actions";
+import { createExpense, deleteExpense, updateExpense } from "../actions";
 import styles from "../expenses.module.css";
 import { PayDialog, type PayLine } from "./PayDialog";
 
@@ -104,7 +104,10 @@ export function ExpenseTable({
             </div>
           ) : (
             <Space>
-              <AddEmployee />
+              {/* employees are managed on the People page; recording needs at least one */}
+              <Link href="/people">
+                <Button>{t.expenses.manageWorkers}</Button>
+              </Link>
               <Button type="primary" onClick={openCreate} disabled={!employees.length}>
                 {t.expenses.record}
               </Button>
@@ -248,43 +251,6 @@ export function ExpenseTable({
           <Input.TextArea rows={2} placeholder={t.expenses.whatBought} />
         </Form.Item>
       </FormModal>
-    </>
-  );
-}
-
-/** Employees have no screen of their own yet; the picker would otherwise be empty forever. */
-function AddEmployee() {
-  const { t } = useI18n();
-  const { pending, run } = useServerAction();
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-
-  function submit() {
-    run(() => createEmployee(name), t.expenses.workerAdded, () => {
-      setName("");
-      setOpen(false);
-    });
-  }
-
-  return (
-    <>
-      <Button onClick={() => setOpen(true)}>{t.expenses.addWorker}</Button>
-      <Modal
-        title={t.expenses.addWorker}
-        open={open}
-        onCancel={() => setOpen(false)}
-        onOk={submit}
-        okButtonProps={{ disabled: !name.trim() }}
-        confirmLoading={pending}
-      >
-        <Input
-          placeholder={t.expenses.fullName}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onPressEnter={submit}
-          style={{ marginTop: 12 }}
-        />
-      </Modal>
     </>
   );
 }

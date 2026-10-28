@@ -7,6 +7,7 @@ import com.github.rrin.telegram.service.TelegramAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Administration of employee ↔ Telegram links (open like the rest of the API until users can log in). */
@@ -21,6 +22,11 @@ public class TelegramAccountController {
     public TelegramAccountController(TelegramAccountService accountService, TelegramMapper mapper) {
         this.accountService = accountService;
         this.mapper = mapper;
+    }
+
+    @GetMapping
+    public List<TelegramAccountResponse> getAll() {
+        return accountService.getAll().stream().map(mapper::toResponse).toList();
     }
 
     @GetMapping("/employee/{employeeId}")

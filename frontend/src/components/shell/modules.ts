@@ -31,6 +31,12 @@ export const MODULES: readonly NavModule[] = [
       { href: "/expenses/budgets", label: "budgets" },
     ],
   },
+  {
+    key: "people",
+    label: "people",
+    basePath: "/people",
+    children: [{ href: "/people", label: "employees", exact: true }],
+  },
 ];
 
 function isUnder(pathname: string, prefix: string) {

@@ -5,9 +5,13 @@ import com.github.rrin.telegram.TelegramAccount;
 import com.github.rrin.telegram.TelegramLinkCode;
 import com.github.rrin.telegram.dto.TelegramAccountRequest;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface TelegramAccountService {
+    /** Every linked account; small (one per employee at most), so not paged. */
+    List<TelegramAccount> getAll();
+
     TelegramAccount getForEmployee(UUID employeeId);
 
     /** Administrator links an employee to a known Telegram id; relinking replaces the employee's previous account. */

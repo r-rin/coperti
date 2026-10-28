@@ -6,3 +6,4 @@ import "server-only";
  */
 export * from "./expenses";
 export * from "./identity";
+export * from "./telegram";

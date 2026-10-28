@@ -25,11 +25,7 @@ function run(work: () => Promise<unknown>, ...paths: string[]): Promise<ActionRe
 
 const ALL = ["/expenses", "/expenses/list", "/expenses/disbursements", "/expenses/budgets"];
 
-// ---------------------------------------------------------------- employees
-
-export async function createEmployee(name: string): Promise<ActionResult> {
-  return run(() => api.post("/employee", { name }), ...ALL);
-}
+// employees are created on the People page (app/people/actions.ts)
 
 // ---------------------------------------------------------------- expenses
 

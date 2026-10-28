@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -44,6 +45,11 @@ public class TelegramAccountServiceImpl implements TelegramAccountService {
         this.codeRepository = codeRepository;
         this.employeeRepository = employeeRepository;
         this.codeGenerator = codeGenerator;
+    }
+
+    @Override
+    public List<TelegramAccount> getAll() {
+        return accountRepository.findAll();
     }
 
     @Override
